@@ -9,14 +9,18 @@ class Task extends Model
 {
     use HasFactory;
 
-    // Kolom yang diizinkan untuk diisi secara massal
-        protected $fillable = [
-            'user_id', 'title', 'subject', 'source_url', 'description', 
-            'deadline', 'priority', 'status'
-        ];
-    // Relasi balik ke User
+    protected $fillable = [
+        'user_id', 'title', 'subject_id', 'description', 
+        'deadline', 'priority', 'status', 'source_url'
+    ];
+
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function subject()
+    {
+        return $this->belongsTo(Subject::class);
     }
 }

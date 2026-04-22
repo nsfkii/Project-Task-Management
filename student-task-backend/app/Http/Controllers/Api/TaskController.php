@@ -9,34 +9,30 @@ use Illuminate\Support\Facades\Auth;
 
 class TaskController extends Controller
 {
-    // Menampilkan semua task milik user yang sedang login
     public function index(Request $request)
     {
-        $query = Task::where('user_id', Auth::id());
+        $query = Task::with('subject')->where('user_id', Auth::id());
 
-        // Fitur Filter (Berdasarkan status / prioritas)
         if ($request->has('status')) {
             $query->where('status', $request->status);
         }
         if ($request->has('priority')) {
             $query->where('priority', $request->priority);
         }
-
-        // Fitur Search Realtime (Berdasarkan judul atau subject)
         if ($request->has('search')) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
-                $q->where('title', 'ilike', "%{$search}%") // ilike untuk PostgreSQL
-                  ->orWhere('subject', 'ilike', "%{$search}%");
+                $q->where('title', 'ilike', "%{$search}%")
+                  ->orWhereHas('subject', function($sq) use ($search) {
+                      $sq->where('name', 'ilike', "%{$search}%");
+                  });
             });
         }
 
-        // --- TAMBAHAN BARU UNTUK KALENDER ---
         if ($request->has('all')) {
             return response()->json($query->orderBy('deadline', 'asc')->get());
         }
 
-        // 1. Hitung Statistik DULU sebelum data dipotong (paginate)
         $stats = [
             'total' => $query->count(),
             'done' => (clone $query)->where('status', 'done')->count(),
@@ -44,94 +40,68 @@ class TaskController extends Controller
             'pending' => (clone $query)->where('status', 'pending')->count(),
         ];
 
-        // 2. Ambil data dengan Pagination (5 data per halaman)
         $tasks = $query->orderBy('deadline', 'asc')->paginate(5);
 
-        // Kembalikan keduanya
-        return response()->json([
-            'stats' => $stats,
-            'tasks' => $tasks
-        ]);
-
-        // Urutkan dari deadline terdekat
-        $tasks = $query->orderBy('deadline', 'asc')->get();
-
-        return response()->json($tasks);
+        return response()->json(['stats' => $stats, 'tasks' => $tasks]);
     }
 
-    // Menambah task baru
     public function store(Request $request)
     {
         $request->validate([
             'title' => 'required|string|max:255',
-            'subject' => 'required|string|max:255',
+            'subject_id' => 'required|exists:subjects,id',
             'description' => 'nullable|string',
             'deadline' => 'required|date',
             'priority' => 'required|in:low,medium,high',
             'status' => 'nullable|in:pending,progress,done',
-            'source_url' => 'nullable|string',
+            'source_url' => 'nullable|url',
         ]);
 
         $task = Task::create([
-            'user_id' => Auth::id(), // Otomatis ambil ID user yang login
+            'user_id' => Auth::id(),
             'title' => $request->title,
-            'subject' => $request->subject,
+            'subject_id' => $request->subject_id,
             'description' => $request->description,
             'deadline' => $request->deadline,
             'priority' => $request->priority,
             'status' => $request->status ?? 'pending',
-            'source_url' => 'nullable|string',
+            'source_url' => $request->source_url,
         ]);
 
-        return response()->json(['message' => 'Task berhasil ditambahkan', 'data' => $task], 201);
+        return response()->json(['message' => 'Task berhasil ditambahkan', 'data' => $task->load('subject')], 201);
     }
 
-    // Melihat detail 1 task
     public function show($id)
     {
-        $task = Task::where('user_id', Auth::id())->find($id);
-
-        if (!$task) {
-            return response()->json(['message' => 'Task tidak ditemukan'], 404);
-        }
-
+        $task = Task::with('subject')->where('user_id', Auth::id())->find($id);
+        if (!$task) return response()->json(['message' => 'Task tidak ditemukan'], 404);
         return response()->json($task);
     }
 
-    // Mengubah data task
     public function update(Request $request, $id)
     {
         $task = Task::where('user_id', Auth::id())->find($id);
-
-        if (!$task) {
-            return response()->json(['message' => 'Task tidak ditemukan'], 404);
-        }
+        if (!$task) return response()->json(['message' => 'Task tidak ditemukan'], 404);
 
         $request->validate([
             'title' => 'sometimes|required|string|max:255',
-            'subject' => 'sometimes|required|string|max:255',
+            'subject_id' => 'sometimes|required|exists:subjects,id',
             'deadline' => 'sometimes|required|date',
             'priority' => 'sometimes|required|in:low,medium,high',
             'status' => 'sometimes|required|in:pending,progress,done',
-            'source_url' => 'nullable|string',
+            'source_url' => 'nullable|url',
         ]);
 
-        $task->update($request->all());
+        $task->update($request->only(['title', 'subject_id', 'description', 'deadline', 'priority', 'status', 'source_url']));
 
-        return response()->json(['message' => 'Task berhasil diupdate', 'data' => $task]);
+        return response()->json(['message' => 'Task berhasil diupdate', 'data' => $task->load('subject')]);
     }
 
-    // Menghapus task
     public function destroy($id)
     {
         $task = Task::where('user_id', Auth::id())->find($id);
-
-        if (!$task) {
-            return response()->json(['message' => 'Task tidak ditemukan'], 404);
-        }
-
+        if (!$task) return response()->json(['message' => 'Task tidak ditemukan'], 404);
         $task->delete();
-
         return response()->json(['message' => 'Task berhasil dihapus']);
     }
 }

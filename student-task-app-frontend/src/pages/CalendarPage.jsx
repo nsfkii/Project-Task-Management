@@ -1,47 +1,18 @@
-import { useState, useEffect } from 'react';
-import FullCalendar from '@fullcalendar/react';
-import dayGridPlugin from '@fullcalendar/daygrid';
-import interactionPlugin from '@fullcalendar/interaction';
-import { Calendar as CalendarIcon } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import api from '../api/axios';
 
 export default function CalendarPage() {
-    const [events, setEvents] = useState([]);
+    const [tasks, setTasks] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [currentDate, setCurrentDate] = useState(new Date());
 
+    // Fetch semua tugas
     const fetchTasks = async () => {
         setLoading(true);
         try {
-            
             const response = await api.get('/tasks?all=true');
-            const tasks = response.data;
-
-            // Mapping data dari API ke format yang dipahami FullCalendar
-            const calendarEvents = tasks.map((task) => {
-                // Menentukan warna berdasarkan prioritas
-                let bgColor = '#22c55e'; // Default Hijau (Low)
-                if (task.priority === 'high') bgColor = '#ef4444'; // Merah
-                if (task.priority === 'medium') bgColor = '#eab308'; // Kuning
-
-                // Jika tugas sudah selesai (Done), warnanya dibuat abu-abu/pudar
-                if (task.status === 'done') bgColor = '#9ca3af';
-
-                return {
-                    id: task.id,
-                    title: task.title,
-                    date: task.deadline, // FullCalendar membaca YYYY-MM-DD
-                    backgroundColor: bgColor,
-                    borderColor: bgColor,
-                    extendedProps: {
-                        subject: task.subject,
-                        status: task.status,
-                        priority: task.priority,
-                        description: task.description
-                    }
-                };
-            });
-
-            setEvents(calendarEvents);
+            setTasks(response.data);
         } catch (error) {
             console.error("Gagal mengambil data kalender", error);
         } finally {
@@ -53,73 +24,210 @@ export default function CalendarPage() {
         fetchTasks();
     }, []);
 
-    // Fungsi ketika event/tugas di kalender diklik
-    const handleEventClick = (clickInfo) => {
-        const { title, extendedProps } = clickInfo.event;
-        
-        // Kita gunakan alert bawaan browser untuk simpelnya.
-        // Nanti kamu bisa ubah menjadi Modal Popup cantik seperti di Dashboard!
-        alert(
-            `Judul Tugas: ${title}\n` +
-            `Mata Kuliah: ${extendedProps.subject}\n` +
-            `Status: ${extendedProps.status.toUpperCase()}\n` +
-            `Prioritas: ${extendedProps.priority.toUpperCase()}\n` +
-            `Deskripsi: ${extendedProps.description || 'Tidak ada deskripsi'}`
-        );
+    // Kelompokkan tugas berdasarkan deadline (YYYY-MM-DD)
+    const tasksByDate = useMemo(() => {
+        const map = new Map();
+        tasks.forEach(task => {
+            const dateKey = task.deadline;
+            if (!map.has(dateKey)) map.set(dateKey, []);
+            map.get(dateKey).push(task);
+        });
+        return map;
+    }, [tasks]);
+
+    // Helper tanggal
+    const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
+    const getFirstDayOffset = (year, month) => {
+        const day = new Date(year, month, 1).getDay(); // 0 Minggu
+        return day === 0 ? 6 : day - 1; // Senin = 0, Minggu = 6
     };
 
+    // Generate grid 6 minggu (42 hari)
+    const generateCalendar = () => {
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth();
+        
+        const firstDayOffset = getFirstDayOffset(year, month);
+        const daysInMonth = getDaysInMonth(year, month);
+        
+        // Bulan sebelumnya
+        const prevMonthDate = new Date(year, month, 0);
+        const daysInPrevMonth = getDaysInMonth(prevMonthDate.getFullYear(), prevMonthDate.getMonth());
+        
+        const calendarDays = [];
+        
+        // Hari dari bulan sebelumnya
+        for (let i = firstDayOffset - 1; i >= 0; i--) {
+            const date = new Date(year, month - 1, daysInPrevMonth - i);
+            calendarDays.push({
+                date,
+                isCurrentMonth: false,
+                tasks: tasksByDate.get(date.toISOString().slice(0, 10)) || []
+            });
+        }
+        
+        // Hari bulan ini
+        for (let d = 1; d <= daysInMonth; d++) {
+            const date = new Date(year, month, d);
+            calendarDays.push({
+                date,
+                isCurrentMonth: true,
+                tasks: tasksByDate.get(date.toISOString().slice(0, 10)) || []
+            });
+        }
+        
+        // Hari bulan depan hingga 42 total
+        const remaining = 42 - calendarDays.length;
+        for (let d = 1; d <= remaining; d++) {
+            const date = new Date(year, month + 1, d);
+            calendarDays.push({
+                date,
+                isCurrentMonth: false,
+                tasks: tasksByDate.get(date.toISOString().slice(0, 10)) || []
+            });
+        }
+        
+        return calendarDays;
+    };
+    
+    const calendarDays = generateCalendar();
+    
+    const isToday = (date) => {
+        const today = new Date();
+        return date.toDateString() === today.toDateString();
+    };
+    
+    const prevMonth = () => {
+        setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
+    };
+    
+    const nextMonth = () => {
+        setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
+    };
+    
+    const goToToday = () => {
+        setCurrentDate(new Date());
+    };
+    
+    const handleTaskClick = (task, e) => {
+        e.stopPropagation();
+        alert(
+            `Judul Tugas: ${task.title}\n` +
+            `Mata Kuliah: ${task.subject}\n` +
+            `Status: ${task.status.toUpperCase()}\n` +
+            `Prioritas: ${task.priority.toUpperCase()}\n` +
+            `Deskripsi: ${task.description || 'Tidak ada deskripsi'}`
+        );
+    };
+    
+    const getTaskBadgeStyle = (task) => {
+        if (task.status === 'done') {
+            return 'bg-gray-400 dark:bg-gray-600 text-white';
+        }
+        switch (task.priority) {
+            case 'high': return 'bg-rose-500 text-white';
+            case 'medium': return 'bg-amber-400 text-amber-900';
+            default: return 'bg-emerald-500 text-white';
+        }
+    };
+    
+    const monthYear = currentDate.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+    const weekdays = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
+    
     return (
         <div className="space-y-6">
-            <div className="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex items-center gap-4">
-                <div className="p-3 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-lg">
+            {/* Header Halaman */}
+            <div className="bg-white dark:bg-slate-800 p-5 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex items-center gap-4">
+                <div className="p-3 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-lg">
                     <CalendarIcon size={24} />
                 </div>
                 <div>
-                    <h2 className="text-xl font-bold text-gray-800 dark:text-white">Kalender Deadline</h2>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Pantau jadwal pengumpulan tugas kamu di sini</p>
+                    <h2 className="text-xl font-bold text-slate-800 dark:text-white">Kalender Deadline</h2>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">Pantau jadwal pengumpulan tugas kamu di sini</p>
                 </div>
             </div>
-
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 relative z-0">
-                {/* agar text kalender tetap terlihat jelas di Dark Mode 
-                */}
-                <style>
-                    {`
-                    .fc .fc-toolbar-title { font-size: 1.25rem; font-weight: bold; }
-                    .fc .fc-button-primary { background-color: #2563eb !important; border-color: #2563eb !important; }
-                    .fc .fc-button-primary:hover { background-color: #1d4ed8 !important; border-color: #1d4ed8 !important; }
-                    .fc-theme-standard td, .fc-theme-standard th { border-color: #e5e7eb; }
-                    
-                    /* Tweak Dark Mode */
-                    .dark .fc .fc-toolbar-title { color: white; }
-                    .dark .fc-theme-standard td, .dark .fc-theme-standard th { border-color: #374151; }
-                    .dark .fc .fc-daygrid-day-number { color: #d1d5db; }
-                    .dark .fc .fc-col-header-cell-cushion { color: #d1d5db; }
-                    .dark .fc .fc-day-today { background-color: rgba(37, 99, 235, 0.1) !important; }
-                    `}
-                </style>
-
+            
+            {/* Kalender Grid */}
+            <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden p-6">
+                {/* Navigasi Bulan */}
+                <div className="flex justify-between items-center mb-6">
+                    <button onClick={prevMonth} className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                        <ChevronLeft size={20} className="text-slate-600 dark:text-slate-300" />
+                    </button>
+                    <h3 className="text-xl font-semibold text-slate-800 dark:text-white">{monthYear}</h3>
+                    <button onClick={nextMonth} className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                        <ChevronRight size={20} className="text-slate-600 dark:text-slate-300" />
+                    </button>
+                </div>
+                
+                {/* Header Hari */}
+                <div className="grid grid-cols-7 gap-2 md:gap-4 mb-4">
+                    {weekdays.map(day => (
+                        <div key={day} className="text-center font-semibold text-slate-500 dark:text-slate-400 text-sm pb-2">
+                            {day}
+                        </div>
+                    ))}
+                </div>
+                
+                {/* Grid Tanggal */}
                 {loading ? (
-                    <div className="flex justify-center items-center h-64 text-gray-500">Memuat kalender...</div>
+                    <div className="flex justify-center items-center h-64 text-slate-500">Memuat kalender...</div>
                 ) : (
-                    <FullCalendar
-                        plugins={[dayGridPlugin, interactionPlugin]}
-                        initialView="dayGridMonth"
-                        events={events}
-                        eventClick={handleEventClick}
-                        height="auto" // Agar tinggi kalender menyesuaikan layar
-                        headerToolbar={{
-                            left: 'prev,next today',
-                            center: 'title',
-                            right: 'dayGridMonth,dayGridWeek'
-                        }}
-                        buttonText={{
-                            today: 'Hari Ini',
-                            month: 'Bulan',
-                            week: 'Minggu'
-                        }}
-                    />
+                    <div className="grid grid-cols-7 gap-2 md:gap-4">
+                        {calendarDays.map((day, idx) => {
+                            const isTodayFlag = isToday(day.date);
+                            return (
+                                <div 
+                                    key={idx}
+                                    className={`min-h-[100px] p-2 rounded-2xl transition-colors group ${
+                                        isTodayFlag 
+                                            ? 'bg-indigo-50/50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20' 
+                                            : 'border border-transparent hover:border-slate-200 dark:hover:border-slate-600'
+                                    } ${!day.isCurrentMonth ? 'opacity-40' : ''}`}
+                                >
+                                    <div className="flex justify-between items-start">
+                                        <span className={`inline-flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium ${
+                                            isTodayFlag 
+                                                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/30' 
+                                                : 'text-slate-700 dark:text-slate-300 group-hover:bg-slate-100 dark:group-hover:bg-slate-700'
+                                        }`}>
+                                            {day.date.getDate()}
+                                        </span>
+                                    </div>
+                                    
+                                    {/* Task Pills */}
+                                    <div className="mt-2 space-y-1">
+                                        {day.tasks.slice(0, 2).map((task, tIdx) => (
+                                            <div 
+                                                key={tIdx}
+                                                onClick={(e) => handleTaskClick(task, e)}
+                                                className={`w-full truncate rounded-lg px-2 py-1 text-xs font-semibold cursor-pointer hover:opacity-80 transition-opacity ${getTaskBadgeStyle(task)}`}
+                                                title={task.title}
+                                            >
+                                                {task.title}
+                                            </div>
+                                        ))}
+                                        {day.tasks.length > 2 && (
+                                            <div className="text-xs text-slate-500 dark:text-slate-400 pl-1">
+                                                +{day.tasks.length - 2} lainnya
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
                 )}
+                
+                {/* Tombol Hari Ini */}
+                <div className="mt-6 flex justify-center">
+                    <button 
+                        onClick={goToToday}
+                        className="px-4 py-2 text-sm font-medium rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+                    >
+                        Hari Ini
+                    </button>
+                </div>
             </div>
         </div>
     );

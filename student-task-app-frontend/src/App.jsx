@@ -7,6 +7,7 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import CalendarPage from './pages/CalendarPage';
 import Profile from './pages/Profile';
+import AuthCallback from './pages/AuthCallback'; // Import komponen callback
 
 function App() {
   return (
@@ -14,6 +15,9 @@ function App() {
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        
+        {/* Rute publik untuk menerima callback Google OAuth */}
+        <Route path="/auth/callback" element={<AuthCallback />} />
 
         {/* Membungkus Dashboard dengan Layout */}
         <Route path="/dashboard" element={

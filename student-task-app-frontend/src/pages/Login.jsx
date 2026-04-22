@@ -2,6 +2,7 @@ import { useState, useContext } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../api/axios';
 import { AuthContext } from '../context/AuthContext';
+import GoogleLoginButton from '../components/GoogleLoginButton'; // Import tombol Google
 
 export default function Login() {
     const [email, setEmail] = useState('');
@@ -18,13 +19,8 @@ export default function Login() {
         setError('');
 
         try {
-            // Memanggil API Laravel
             const response = await api.post('/login', { email, password });
-            
-            // Menyimpan token dan data user ke Context
             login(response.data.user, response.data.access_token);
-            
-            // Pindah ke halaman dashboard
             navigate('/dashboard');
         } catch (err) {
             setError(err.response?.data?.message || 'Terjadi kesalahan saat login');
@@ -77,6 +73,24 @@ export default function Login() {
                         {loading ? 'Processing...' : 'Login'}
                     </button>
                 </form>
+
+                {/* Divider dan tombol Google */}
+                <div className="mt-6">
+                    <div className="relative">
+                        <div className="absolute inset-0 flex items-center">
+                            <div className="w-full border-t border-gray-300 dark:border-gray-600"></div>
+                        </div>
+                        <div className="relative flex justify-center text-sm">
+                            <span className="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">
+                                Or continue with
+                            </span>
+                        </div>
+                    </div>
+
+                    <div className="mt-6">
+                        <GoogleLoginButton />
+                    </div>
+                </div>
 
                 <p className="mt-4 text-center text-sm text-gray-600 dark:text-gray-400">
                     Belum punya akun? <Link to="/register" className="text-blue-600 hover:underline">Daftar di sini</Link>

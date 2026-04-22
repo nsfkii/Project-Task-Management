@@ -1,6 +1,7 @@
 import { createContext, useState, useEffect } from 'react';
 import api from '../api/axios';
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
@@ -18,7 +19,7 @@ export const AuthProvider = ({ children }) => {
     const login = (userData, userToken) => {
         setUser(userData);
         setToken(userToken);
-        setTheme(userData.theme || 'light');
+        setTheme(userData.theme || 'dark');
         localStorage.setItem('token', userToken);
     };
 
