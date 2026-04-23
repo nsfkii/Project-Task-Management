@@ -19,8 +19,9 @@ export const AuthProvider = ({ children }) => {
     const login = (userData, userToken) => {
         setUser(userData);
         setToken(userToken);
-        setTheme(userData.theme || 'dark');
         localStorage.setItem('token', userToken);
+        localStorage.setItem('user', JSON.stringify(userData)); // <-- tambahkan ini
+        setTheme(userData.theme || 'light');
     };
 
     useEffect(() => {

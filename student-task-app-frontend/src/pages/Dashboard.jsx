@@ -1,8 +1,11 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useContext } from 'react';
+import { AuthContext } from '../context/AuthContext';
 import { 
     Search, Plus, Trash2, Edit, Clock, CheckCircle, CircleDashed, 
-    AlertCircle, X, ExternalLink
+    AlertCircle, X, ExternalLink, Bell, Calendar, BookOpen, ArrowRight
 } from 'lucide-react';
+import Swal from 'sweetalert2';
+import { Link } from 'react-router-dom';
 import api from '../api/axios';
 
 export default function Dashboard() {
@@ -19,6 +22,10 @@ export default function Dashboard() {
 
     // State untuk mata kuliah
     const [subjects, setSubjects] = useState([]);
+
+    // State untuk near deadline tasks
+    const [nearDeadlineTasks, setNearDeadlineTasks] = useState([]);
+    
 
     // Modal state untuk task
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -39,6 +46,9 @@ export default function Dashboard() {
         const timer = setTimeout(() => setDebouncedSearch(searchTerm), 500);
         return () => clearTimeout(timer);
     }, [searchTerm]);
+
+    // Ambil nama user dari AuthContext
+    const { user } = useContext(AuthContext); 
 
     // Ambil daftar mata kuliah
     const fetchSubjects = useCallback(async () => {
@@ -78,6 +88,48 @@ export default function Dashboard() {
         fetchTasks();
     }, [fetchSubjects, fetchTasks]);
 
+    // useEffect untuk filter tugas mendekati deadline (hanya status belum selesai)
+    useEffect(() => {
+        if (tasks.length > 0) {
+            const today = new Date();
+            const near = tasks.filter(task => {
+                if (task.status === 'done') return false;
+                const taskDate = new Date(task.deadline);
+                const diffDays = Math.ceil((taskDate - today) / (1000 * 60 * 60 * 24));
+                return diffDays <= 2 && diffDays >= 0;
+            });
+            setNearDeadlineTasks(near);
+        }
+    }, [tasks]);
+
+    // Notifikasi dengan SweetAlert2 Toast (muncul setiap kali masuk halaman)
+    useEffect(() => {
+        if (nearDeadlineTasks.length > 0) {
+            const taskList = nearDeadlineTasks.map(t => `• ${t.title} (${t.deadline})`).join('<br>');
+            Swal.fire({
+                title: '⚠️ Perhatian!',
+                html: `Anda memiliki <strong>${nearDeadlineTasks.length} tugas</strong> yang mendekati deadline:<br><br>${taskList}`,
+                icon: 'warning',
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: true,
+                confirmButtonText: 'Lihat',
+                timer: 5000,
+                timerProgressBar: true,
+                didOpen: (toast) => {
+                    toast.addEventListener('mouseenter', Swal.stopTimer);
+                    toast.addEventListener('mouseleave', Swal.resumeTimer);
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.querySelector('.space-y-3')?.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+            
+            // Hapus baris localStorage.setItem('lastNotifiedDate', today);
+        }
+    }, [nearDeadlineTasks]);
+
     const progressPercentage = stats.total === 0 ? 0 : Math.round((stats.done / stats.total) * 100);
 
     const getPriorityColor = (priority) => {
@@ -86,11 +138,27 @@ export default function Dashboard() {
         return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
     };
 
-    const isNearDeadline = (deadline) => {
+    // Fungsi untuk mendapatkan style berdasarkan deadline
+    const getDeadlineStyle = (deadline, status) => {
+        if (status === 'done') return '';
         const today = new Date();
         const taskDate = new Date(deadline);
         const diffDays = Math.ceil((taskDate - today) / (1000 * 60 * 60 * 24));
-        return diffDays <= 2 && diffDays >= 0;
+        if (diffDays === 0) return 'border-l-4 border-red-500 bg-red-50 dark:bg-red-900/20';
+        if (diffDays === 1) return 'border-l-4 border-amber-500 bg-amber-50 dark:bg-amber-900/20';
+        return '';
+    };
+
+    const getDaysRemaining = (deadline) => {
+        const today = new Date();
+        const taskDate = new Date(deadline);
+        const diffDays = Math.ceil((taskDate - today) / (1000 * 60 * 60 * 24));
+        return diffDays;
+    };
+
+    const formatDate = (dateString) => {
+        const options = { day: 'numeric', month: 'long', year: 'numeric' };
+        return new Date(dateString).toLocaleDateString('id-ID', options);
     };
 
     // Modal handlers untuk task
@@ -194,11 +262,8 @@ export default function Dashboard() {
                 color: newSubjectColor || null,
             });
             const newSubject = response.data.data;
-            // Refresh daftar mata kuliah
             await fetchSubjects();
-            // Set pilihan ke mata kuliah yang baru ditambahkan
             setFormData(prev => ({ ...prev, subject_id: newSubject.id }));
-            // Tutup modal tambah mata kuliah
             closeAddSubjectModal();
         } catch (error) {
             console.error("Gagal menambah mata kuliah", error);
@@ -209,94 +274,163 @@ export default function Dashboard() {
     };
 
     return (
-        <div className="space-y-6 relative">
-            {/* STATISTIK CARDS - Klik untuk filter */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-                {/* Total Tugas - klik untuk reset filter */}
+        <div className="space-y-4 md:space-y-6 w-full md:max-w-4xl md:mx-auto px-0 md:px-0">
+            {/* HEADER WELCOME */}
+            <div className="text-center py-8">
+                <h1 className="text-3xl md:text-4xl font-bold text-slate-800 dark:text-white mb-2">
+                    Selamat datang, {user?.name || 'User'}! 🎉
+                </h1>
+                <p className="text-slate-500 dark:text-slate-400 text-lg">
+                    Kelola Tugas-tugas Anda
+                </p>
+            </div>
+
+            {/* TUGAS MENDEKATI DEADLINE */}
+            {nearDeadlineTasks.length > 0 && (
+                <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-red-100 dark:border-red-900/30 p-6">
+                    <div className="flex items-center gap-2 mb-4">
+                        <Bell className="text-red-500" size={20} />
+                        <h2 className="text-lg font-bold text-slate-800 dark:text-white">
+                            Tugas Mendekati Deadline
+                        </h2>
+                    </div>
+                    <div className="space-y-3">
+                        {nearDeadlineTasks.map(task => {
+                            const daysRemaining = getDaysRemaining(task.deadline);
+                            return (
+                                <div 
+                                    key={task.id} 
+                                    className="flex items-center justify-between p-3 rounded-xl bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/20"
+                                >
+                                    <div className="flex-1">
+                                        <h3 className="font-semibold text-slate-800 dark:text-white">
+                                            {task.title}
+                                        </h3>
+                                        <div className="flex items-center gap-2 mt-1 text-sm text-slate-500 dark:text-slate-400">
+                                            <Calendar size={14} />
+                                            <span>Deadline: {formatDate(task.deadline)}</span>
+                                            {task.subject && (
+                                                <>
+                                                    <BookOpen size={14} />
+                                                    <span>{task.subject.name}</span>
+                                                </>
+                                            )}
+                                        </div>
+                                        <p className={`text-xs mt-1 font-medium ${daysRemaining === 0 ? 'text-red-600' : 'text-amber-600'}`}>
+                                            {daysRemaining === 0 ? '⚠️ Deadline hari ini!' : `⏰ ${daysRemaining} hari lagi`}
+                                        </p>
+                                    </div>
+                                    <button
+                                        onClick={() => handleStatusChange(task.id, 'done')}
+                                        className="ml-4 px-4 py-2 bg-green-500 hover:bg-green-600 text-white text-sm font-medium rounded-lg transition-colors"
+                                    >
+                                        Done
+                                    </button>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
+
+            {/* STATISTIK CARDS */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {/* Total Tugas */}
                 <div 
                     onClick={() => { setFilterStatus(''); setPage(1); }}
-                    className="p-6 rounded-3xl bg-white dark:bg-slate-800 shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-slate-50 dark:border-slate-700 group hover:-translate-y-1 transition-transform duration-300 cursor-pointer"
+                    className="p-5 rounded-2xl bg-white dark:bg-slate-800 shadow-sm border border-slate-100 dark:border-slate-700 group hover:-translate-y-1 transition-transform duration-300 cursor-pointer"
                 >
-                    <div className="flex items-center gap-4">
-                        <div className="h-14 w-14 rounded-2xl bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-blue-500">
-                            <CheckCircle size={28} />
+                    <div className="flex items-center gap-3">
+                        <div className="h-12 w-12 rounded-xl bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-blue-500">
+                            <CheckCircle size={24} />
                         </div>
                         <div>
-                            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Total Tugas</p>
-                            <h3 className="text-3xl font-bold text-slate-800 dark:text-white mt-1">{stats.total}</h3>
-                        </div>
-                    </div>
-                    <div className="mt-4">
-                        <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400 mb-1">
-                            <span>Progress Keseluruhan</span>
-                            <span>{progressPercentage}%</span>
-                        </div>
-                        <div className="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-2">
-                            <div className="bg-blue-500 h-2 rounded-full transition-all duration-500" style={{ width: `${progressPercentage}%` }}></div>
+                            <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Total Tugas</p>
+                            <h3 className="text-2xl font-bold text-slate-800 dark:text-white">{stats.total}</h3>
                         </div>
                     </div>
                 </div>
 
-                {/* Selesai - klik untuk filter status 'done' */}
+                {/* Selesai */}
                 <div 
                     onClick={() => { setFilterStatus('done'); setPage(1); }}
-                    className="p-6 rounded-3xl bg-white dark:bg-slate-800 shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-slate-50 dark:border-slate-700 flex items-center gap-4 group hover:-translate-y-1 transition-transform duration-300 cursor-pointer"
+                    className="p-5 rounded-2xl bg-white dark:bg-slate-800 shadow-sm border border-slate-100 dark:border-slate-700 group hover:-translate-y-1 transition-transform duration-300 cursor-pointer"
                 >
-                    <div className="h-14 w-14 rounded-2xl bg-green-50 dark:bg-green-500/10 flex items-center justify-center text-green-500">
-                        <CheckCircle size={28} />
-                    </div>
-                    <div>
-                        <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Selesai</p>
-                        <h3 className="text-3xl font-bold text-slate-800 dark:text-white mt-1">{stats.done}</h3>
+                    <div className="flex items-center gap-3">
+                        <div className="h-12 w-12 rounded-xl bg-green-50 dark:bg-green-500/10 flex items-center justify-center text-green-500">
+                            <CheckCircle size={24} />
+                        </div>
+                        <div>
+                            <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Selesai</p>
+                            <h3 className="text-2xl font-bold text-slate-800 dark:text-white">{stats.done}</h3>
+                        </div>
                     </div>
                 </div>
 
-                {/* Sedang Dikerjakan - klik untuk filter status 'progress' */}
+                {/* Sedang Dikerjakan */}
                 <div 
                     onClick={() => { setFilterStatus('progress'); setPage(1); }}
-                    className="p-6 rounded-3xl bg-white dark:bg-slate-800 shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-slate-50 dark:border-slate-700 flex items-center gap-4 group hover:-translate-y-1 transition-transform duration-300 cursor-pointer"
+                    className="p-5 rounded-2xl bg-white dark:bg-slate-800 shadow-sm border border-slate-100 dark:border-slate-700 group hover:-translate-y-1 transition-transform duration-300 cursor-pointer"
                 >
-                    <div className="h-14 w-14 rounded-2xl bg-amber-50 dark:bg-amber-500/10 flex items-center justify-center text-amber-500">
-                        <CircleDashed size={28} />
-                    </div>
-                    <div>
-                        <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Sedang Dikerjakan</p>
-                        <h3 className="text-3xl font-bold text-slate-800 dark:text-white mt-1">{stats.progress}</h3>
+                    <div className="flex items-center gap-3">
+                        <div className="h-12 w-12 rounded-xl bg-amber-50 dark:bg-amber-500/10 flex items-center justify-center text-amber-500">
+                            <CircleDashed size={24} />
+                        </div>
+                        <div>
+                            <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Progress</p>
+                            <h3 className="text-2xl font-bold text-slate-800 dark:text-white">{stats.progress}</h3>
+                        </div>
                     </div>
                 </div>
 
-                {/* Belum Dimulai - klik untuk filter status 'pending' */}
+                {/* Belum Dimulai */}
                 <div 
                     onClick={() => { setFilterStatus('pending'); setPage(1); }}
-                    className="p-6 rounded-3xl bg-white dark:bg-slate-800 shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-slate-50 dark:border-slate-700 flex items-center gap-4 group hover:-translate-y-1 transition-transform duration-300 cursor-pointer"
+                    className="p-5 rounded-2xl bg-white dark:bg-slate-800 shadow-sm border border-slate-100 dark:border-slate-700 group hover:-translate-y-1 transition-transform duration-300 cursor-pointer"
                 >
-                    <div className="h-14 w-14 rounded-2xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400">
-                        <Clock size={28} />
-                    </div>
-                    <div>
-                        <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Belum Dimulai</p>
-                        <h3 className="text-3xl font-bold text-slate-800 dark:text-white mt-1">{stats.pending}</h3>
+                    <div className="flex items-center gap-3">
+                        <div className="h-12 w-12 rounded-xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400">
+                            <Clock size={24} />
+                        </div>
+                        <div>
+                            <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Pending</p>
+                            <h3 className="text-2xl font-bold text-slate-800 dark:text-white">{stats.pending}</h3>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            {/* SEARCH, FILTER & TAMBAH BUTTON */}
-            <div className="flex flex-col md:flex-row gap-4 justify-between items-center bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700">
+            {/* PROGRESS BAR */}
+            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 p-5">
+                <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Progress Keseluruhan</span>
+                    <span className="text-sm font-bold text-indigo-600 dark:text-indigo-400">{progressPercentage}%</span>
+                </div>
+                <div className="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-3">
+                    <div 
+                        className="bg-gradient-to-r from-indigo-500 to-blue-500 h-3 rounded-full transition-all duration-500" 
+                        style={{ width: `${progressPercentage}%` }}
+                    ></div>
+                </div>
+            </div>
+
+            {/* SEARCH & FILTER */}
+            <div className="flex flex-col md:flex-row gap-3 justify-between items-center bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700">
                 <div className="flex-1 w-full relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                     <input 
                         type="text" 
-                        placeholder="Cari judul tugas atau mata kuliah..." 
+                        placeholder="Cari tugas..." 
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none dark:text-white transition-all"
+                        className="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none dark:text-white text-sm transition-all"
                     />
                 </div>
-                <div className="flex gap-3 w-full md:w-auto">
+                <div className="flex gap-2 w-full md:w-auto">
                     <select 
                         value={filterStatus} 
                         onChange={(e) => setFilterStatus(e.target.value)} 
-                        className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white"
+                        className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white text-sm"
                     >
                         <option value="">Semua Status</option>
                         <option value="pending">Pending</option>
@@ -306,7 +440,7 @@ export default function Dashboard() {
                     <select 
                         value={filterPriority} 
                         onChange={(e) => setFilterPriority(e.target.value)} 
-                        className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white"
+                        className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white text-sm"
                     >
                         <option value="">Semua Prioritas</option>
                         <option value="high">High</option>
@@ -315,40 +449,51 @@ export default function Dashboard() {
                     </select>
                     <button 
                         onClick={() => openModal()} 
-                        className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-semibold transition-all shadow-md hover:shadow-lg"
+                        className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-medium transition-all shadow-md hover:shadow-lg text-sm"
                     >
-                        <Plus size={20} /> Tambah
+                        <Plus size={18} /> Tambah
                     </button>
                 </div>
             </div>
 
-            {/* DAFTAR TUGAS (CARD BASED) */}
-            <div className="space-y-4 mt-8">
+            {/* DAFTAR TUGAS */}
+            <div className="space-y-3">
                 {loading ? (
-                    <div className="text-center py-12 text-slate-500 dark:text-slate-400">Memuat data...</div>
+                    <div className="text-center py-12">
+                        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+                        <p className="mt-3 text-slate-500 dark:text-slate-400">Memuat data...</p>
+                    </div>
                 ) : tasks.length === 0 ? (
-                    <div className="text-center py-12 text-slate-500 dark:text-slate-400">Tidak ada tugas ditemukan.</div>
+                    <div className="text-center py-12 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700">
+                        <Clock className="mx-auto text-slate-300 dark:text-slate-600" size={48} />
+                        <p className="mt-3 text-slate-500 dark:text-slate-400">Tidak ada tugas ditemukan</p>
+                    </div>
                 ) : (
                     tasks.map((task) => (
-                        <div key={task.id} className="p-5 bg-white dark:bg-slate-800 rounded-2xl shadow-sm hover:shadow-xl hover:shadow-indigo-500/5 dark:hover:shadow-black/20 border border-slate-100 dark:border-slate-700 transition-all duration-300 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                            <div className="flex flex-col gap-1">
-                                <h4 className="text-lg font-semibold text-slate-800 dark:text-white">{task.title}</h4>
-                                {task.subject && (
-                                    <p className="text-sm text-slate-500 dark:text-slate-400">
-                                        {task.subject.name}
-                                    </p>
-                                )}
+                        <div 
+                            key={task.id} 
+                            className={`p-4 bg-white dark:bg-slate-800 rounded-2xl shadow-sm hover:shadow-md border border-slate-100 dark:border-slate-700 transition-all duration-300 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 ${getDeadlineStyle(task.deadline, task.status)}`}
+                        >
+                            <div className="flex flex-col gap-1 flex-1">
+                                <h4 className="font-semibold text-slate-800 dark:text-white">{task.title}</h4>
+                                <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
+                                    {task.subject && <span>{task.subject.name}</span>}
+                                    <span className="flex items-center gap-1">
+                                        <Calendar size={12} />
+                                        {task.deadline}
+                                    </span>
+                                </div>
                                 {task.source_url && (
-                                    <a href={task.source_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors mt-1 w-fit">
-                                        <ExternalLink size={14} /> Buka Sumber Tugas
+                                    <a href={task.source_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 mt-1 w-fit">
+                                        <ExternalLink size={12} /> Sumber Tugas
                                     </a>
                                 )}
                             </div>
-                            <div className="flex items-center gap-3 md:gap-6 flex-wrap">
+                            <div className="flex items-center gap-2 md:gap-3 flex-wrap">
                                 <select
                                     value={task.status}
                                     onChange={(e) => handleStatusChange(task.id, e.target.value)}
-                                    className={`text-xs font-bold uppercase tracking-wider rounded-full px-3 py-1.5 outline-none cursor-pointer ${
+                                    className={`text-xs font-bold uppercase tracking-wider rounded-full px-3 py-1 outline-none cursor-pointer ${
                                         task.status === 'done' ? 'bg-green-50 text-green-600 dark:bg-green-500/10 dark:text-green-400' :
                                         task.status === 'progress' ? 'bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400' :
                                         'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300'
@@ -358,21 +503,15 @@ export default function Dashboard() {
                                     <option value="progress">Progress</option>
                                     <option value="done">Selesai</option>
                                 </select>
-                                <div className="flex flex-col items-end">
-                                    <div className={`flex items-center gap-1 text-xs font-medium ${isNearDeadline(task.deadline) && task.status !== 'done' ? 'text-red-600' : 'text-slate-500 dark:text-slate-400'}`}>
-                                        {isNearDeadline(task.deadline) && task.status !== 'done' && <AlertCircle size={14} />}
-                                        <span>{task.deadline}</span>
-                                    </div>
-                                </div>
-                                <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${getPriorityColor(task.priority)}`}>
+                                <span className={`px-2.5 py-1 rounded-full text-xs font-bold uppercase ${getPriorityColor(task.priority)}`}>
                                     {task.priority}
                                 </span>
-                                <div className="flex gap-2">
-                                    <button onClick={() => openModal(task)} className="p-2 text-slate-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-slate-700 rounded-xl transition-colors">
-                                        <Edit size={18} />
+                                <div className="flex gap-1">
+                                    <button onClick={() => openModal(task)} className="p-1.5 text-slate-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-slate-700 rounded-lg transition-colors">
+                                        <Edit size={16} />
                                     </button>
-                                    <button onClick={() => handleDelete(task.id)} className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-slate-700 rounded-xl transition-colors">
-                                        <Trash2 size={18} />
+                                    <button onClick={() => handleDelete(task.id)} className="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-slate-700 rounded-lg transition-colors">
+                                        <Trash2 size={16} />
                                     </button>
                                 </div>
                             </div>
@@ -388,17 +527,25 @@ export default function Dashboard() {
                         Halaman {paginationData.current_page || 1} dari {paginationData.last_page || 1}
                     </span>
                     <div className="flex gap-2">
-                        <button disabled={!paginationData.prev_page_url} onClick={() => setPage(page - 1)} className="px-4 py-2 text-sm rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50 transition-colors">
+                        <button 
+                            disabled={!paginationData.prev_page_url} 
+                            onClick={() => setPage(page - 1)} 
+                            className="px-4 py-2 text-sm rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50 transition-colors"
+                        >
                             Sebelumnya
                         </button>
-                        <button disabled={!paginationData.next_page_url} onClick={() => setPage(page + 1)} className="px-4 py-2 text-sm rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50 transition-colors">
+                        <button 
+                            disabled={!paginationData.next_page_url} 
+                            onClick={() => setPage(page + 1)} 
+                            className="px-4 py-2 text-sm rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50 transition-colors"
+                        >
                             Berikutnya
                         </button>
                     </div>
                 </div>
             )}
 
-            {/* MODAL TUGAS dengan dropdown mata kuliah + tombol tambah */}
+            {/* MODAL TUGAS */}
             {isModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
                     <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
@@ -413,7 +560,7 @@ export default function Dashboard() {
                         <form onSubmit={handleSubmit} className="p-5 space-y-4">
                             <div>
                                 <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Judul Tugas *</label>
-                                <input type="text" required value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} className="w-full px-4 py-2 rounded-lg bg-slate-50 dark:bg-slate-900 border focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Contoh: Perancangan Strategis SI" />
+                                <input type="text" required value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} className="w-full px-4 py-2 rounded-lg bg-slate-50 dark:bg-slate-900 border focus:ring-2 focus:ring-indigo-500 outline-none text-sm" placeholder="Contoh: Perancangan Strategis SI" />
                             </div>
                             <div>
                                 <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Mata Kuliah *</label>
@@ -422,7 +569,7 @@ export default function Dashboard() {
                                         required
                                         value={formData.subject_id}
                                         onChange={(e) => setFormData({...formData, subject_id: e.target.value})}
-                                        className="flex-1 px-4 py-2 rounded-lg bg-slate-50 dark:bg-slate-900 border focus:ring-2 focus:ring-indigo-500 outline-none"
+                                        className="flex-1 px-4 py-2 rounded-lg bg-slate-50 dark:bg-slate-900 border focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
                                     >
                                         <option value="">Pilih Mata Kuliah</option>
                                         {subjects.map((subject) => (
@@ -443,16 +590,16 @@ export default function Dashboard() {
                             </div>
                             <div>
                                 <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Sumber Tugas (URL)</label>
-                                <input type="url" value={formData.source_url} onChange={(e) => setFormData({...formData, source_url: e.target.value})} className="w-full px-4 py-2 rounded-lg bg-slate-50 dark:bg-slate-900 border focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="https://classroom.google.com/..." />
+                                <input type="url" value={formData.source_url} onChange={(e) => setFormData({...formData, source_url: e.target.value})} className="w-full px-4 py-2 rounded-lg bg-slate-50 dark:bg-slate-900 border focus:ring-2 focus:ring-indigo-500 outline-none text-sm" placeholder="https://classroom.google.com/..." />
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Deadline *</label>
-                                    <input type="date" required value={formData.deadline} onChange={(e) => setFormData({...formData, deadline: e.target.value})} className="w-full px-4 py-2 rounded-lg bg-slate-50 dark:bg-slate-900 border focus:ring-2 focus:ring-indigo-500 outline-none [color-scheme:light] dark:[color-scheme:dark]" />
+                                    <input type="date" required value={formData.deadline} onChange={(e) => setFormData({...formData, deadline: e.target.value})} className="w-full px-4 py-2 rounded-lg bg-slate-50 dark:bg-slate-900 border focus:ring-2 focus:ring-indigo-500 outline-none text-sm [color-scheme:light] dark:[color-scheme:dark]" />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Prioritas</label>
-                                    <select value={formData.priority} onChange={(e) => setFormData({...formData, priority: e.target.value})} className="w-full px-4 py-2 rounded-lg bg-slate-50 dark:bg-slate-900 border focus:ring-2 focus:ring-indigo-500 outline-none">
+                                    <select value={formData.priority} onChange={(e) => setFormData({...formData, priority: e.target.value})} className="w-full px-4 py-2 rounded-lg bg-slate-50 dark:bg-slate-900 border focus:ring-2 focus:ring-indigo-500 outline-none text-sm">
                                         <option value="low">Low</option>
                                         <option value="medium">Medium</option>
                                         <option value="high">High</option>
@@ -460,30 +607,27 @@ export default function Dashboard() {
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Deskripsi (Opsional)</label>
-                                <textarea rows="3" value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} className="w-full px-4 py-2 rounded-lg bg-slate-50 dark:bg-slate-900 border focus:ring-2 focus:ring-indigo-500 outline-none resize-none" placeholder="Detail tugas..."></textarea>
-                            </div>
-
-                            {/* Status dropdown */}
-                            <div>
                                 <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Status</label>
                                 <select 
                                     value={formData.status} 
                                     onChange={(e) => setFormData({...formData, status: e.target.value})} 
-                                    className="w-full px-4 py-2 rounded-lg bg-slate-50 dark:bg-slate-900 border focus:ring-2 focus:ring-indigo-500 outline-none"
+                                    className="w-full px-4 py-2 rounded-lg bg-slate-50 dark:bg-slate-900 border focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
                                 >
                                     <option value="pending">Pending</option>
                                     <option value="progress">Progress</option>
                                     <option value="done">Selesai</option>
                                 </select>
                             </div>
-
+                            <div>
+                                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Deskripsi (Opsional)</label>
+                                <textarea rows="3" value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} className="w-full px-4 py-2 rounded-lg bg-slate-50 dark:bg-slate-900 border focus:ring-2 focus:ring-indigo-500 outline-none resize-none text-sm" placeholder="Detail tugas..."></textarea>
+                            </div>
                             <div className="flex justify-end gap-3 pt-4 border-t dark:border-slate-700">
-                                <button type="button" onClick={closeModal} className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">Batal</button>
+                                <button type="button" onClick={closeModal} className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors text-sm">Batal</button>
                                 <button 
                                     type="submit" 
                                     disabled={isSubmitting}
-                                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-sm"
                                 >
                                     {isSubmitting ? (
                                         <>
@@ -523,7 +667,7 @@ export default function Dashboard() {
                                     required
                                     value={newSubjectName}
                                     onChange={(e) => setNewSubjectName(e.target.value)}
-                                    className="w-full px-4 py-2 rounded-lg bg-slate-50 dark:bg-slate-900 border focus:ring-2 focus:ring-indigo-500 outline-none"
+                                    className="w-full px-4 py-2 rounded-lg bg-slate-50 dark:bg-slate-900 border focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
                                     placeholder="Contoh: Pemrograman Web"
                                     autoFocus
                                 />
@@ -536,28 +680,17 @@ export default function Dashboard() {
                                     onChange={(e) => setNewSubjectColor(e.target.value)}
                                     className="w-full h-10 rounded-lg bg-slate-50 dark:bg-slate-900 border focus:ring-2 focus:ring-indigo-500 outline-none cursor-pointer"
                                 />
-                                <p className="text-xs text-slate-500 mt-1">Warna akan otomatis dihasilkan jika tidak diisi</p>
                             </div>
                             <div className="flex justify-end gap-3 pt-4 border-t dark:border-slate-700">
-                                <button type="button" onClick={closeAddSubjectModal} className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                                <button type="button" onClick={closeAddSubjectModal} className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors text-sm">
                                     Batal
                                 </button>
                                 <button 
                                     type="submit" 
                                     disabled={isAddingSubject}
-                                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-sm"
                                 >
-                                    {isAddingSubject ? (
-                                        <>
-                                            <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                            </svg>
-                                            Menyimpan...
-                                        </>
-                                    ) : (
-                                        'Simpan Mata Kuliah'
-                                    )}
+                                    {isAddingSubject ? 'Menyimpan...' : 'Simpan Mata Kuliah'}
                                 </button>
                             </div>
                         </form>
