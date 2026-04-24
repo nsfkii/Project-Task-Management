@@ -248,7 +248,7 @@ export default function HomePage() {
                 </div>
             </section>
             <section className="py-16 bg-indigo-50 dark:bg-indigo-900/20">
-                <div className="max-w-7xl mx-auto px-6 text-center"><h2 className="text-3xl font-bold text-slate-800 dark:text-white mb-4">Siap Meningkatkan Produktivitas?</h2><p className="text-slate-600 dark:text-slate-300 mb-8">Bergabunglah dengan ribuan mahasiswa yang sudah menggunakan StudentTask.</p><Link to="/register" className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold inline-flex items-center gap-2 shadow-lg"><ArrowRight size={18} /> Daftar Sekarang</Link></div>
+                <div className="max-w-7xl mx-auto px-6 text-center"><h2 className="text-3xl font-bold text-slate-800 dark:text-white mb-4">Siap Meningkatkan Produktivitas?</h2><p className="text-slate-600 dark:text-slate-300 mb-8">Bergabunglah dengan ribuan mahasiswa & pelajar yang sudah menggunakan StudentTask.</p><Link to="/register" className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold inline-flex items-center gap-2 shadow-lg"><ArrowRight size={18} /> Daftar Sekarang</Link></div>
             </section>
             <Footer />
         </div>
