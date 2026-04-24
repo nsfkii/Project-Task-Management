@@ -31,7 +31,7 @@ export default function Footer() {
                         <ul className="space-y-1 text-sm">
                             <li>
                                 <a 
-                                    href="https://wa.me/628998869283?text=Halo%2C%20saya%20ingin%20bertanya%20tentang%20StudentTask" 
+                                    href="https://wa.me/628998869283?text=Halo%2C%20saya%20ingin%20bertanya%20tentang%20Website%20StudentTask" 
                                     target="_blank" 
                                     rel="noopener noreferrer" 
                                     className="text-slate-500 hover:text-green-600 transition flex items-center gap-2"
@@ -41,7 +41,7 @@ export default function Footer() {
                             </li>
                             <li>
                                 <a 
-                                    href="https://wa.me/6283822579144?text=Halo%2C%20saya%20ingin%20bertanya%20tentang%20StudentTask" 
+                                    href="https://wa.me/6283822579144?text=Halo%2C%20saya%20ingin%20bertanya%20tentang%20Website%20StudentTask"
                                     target="_blank" 
                                     rel="noopener noreferrer" 
                                     className="text-slate-500 hover:text-green-600 transition flex items-center gap-2"

@@ -5,7 +5,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\TaskController;
 use App\Http\Controllers\Api\SocialAuthController;
-use App\Http\Controllers\Api\SubjectController; 
+use App\Http\Controllers\Api\SubjectController;
+use App\Http\Controllers\Api\OrganizationLinkController; // Tambahkan import
 
 // Public Routes (Bisa diakses tanpa login)
 Route::post('/register', [AuthController::class, 'register']);
@@ -26,4 +27,10 @@ Route::middleware('auth:sanctum')->group(function () {
     
     // Route untuk Subject (Full Resource: index, store, update, destroy)
     Route::apiResource('/subjects', SubjectController::class);
+    
+    // Organization Links (CRUD)
+    Route::get('/organization-links', [OrganizationLinkController::class, 'index']);
+    Route::post('/organization-links', [OrganizationLinkController::class, 'store']);
+    Route::put('/organization-links/{id}', [OrganizationLinkController::class, 'update']);
+    Route::delete('/organization-links/{id}', [OrganizationLinkController::class, 'destroy']);
 });

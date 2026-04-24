@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { 
     Search, Plus, Trash2, Edit, Clock, CheckCircle, CircleDashed, 
-    AlertCircle, X, ExternalLink, Bell, Calendar, BookOpen, ArrowRight
+    AlertCircle, X, ExternalLink, Bell, Calendar, BookOpen
 } from 'lucide-react';
 import Swal from 'sweetalert2';
 import { Link } from 'react-router-dom';
@@ -26,6 +26,8 @@ export default function Dashboard() {
     // State untuk near deadline tasks
     const [nearDeadlineTasks, setNearDeadlineTasks] = useState([]);
     
+    // State untuk animasi tombol Done
+    const [doneAnimating, setDoneAnimating] = useState(null);
 
     // Modal state untuk task
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -88,47 +90,64 @@ export default function Dashboard() {
         fetchTasks();
     }, [fetchSubjects, fetchTasks]);
 
-    // useEffect untuk filter tugas mendekati deadline (hanya status belum selesai)
+    // Filter tugas mendekati deadline (≤ 3 hari)
     useEffect(() => {
         if (tasks.length > 0) {
             const today = new Date();
+            today.setHours(0, 0, 0, 0);
             const near = tasks.filter(task => {
                 if (task.status === 'done') return false;
                 const taskDate = new Date(task.deadline);
+                taskDate.setHours(0, 0, 0, 0);
                 const diffDays = Math.ceil((taskDate - today) / (1000 * 60 * 60 * 24));
-                return diffDays <= 2 && diffDays >= 0;
+                return diffDays <= 3 && diffDays >= 0;
             });
             setNearDeadlineTasks(near);
+        } else {
+            setNearDeadlineTasks([]);
         }
     }, [tasks]);
 
-    // Notifikasi dengan SweetAlert2 Toast (muncul setiap kali masuk halaman)
+    // Notifikasi dengan SweetAlert2 Toast (muncul sekali sehari)
     useEffect(() => {
         if (nearDeadlineTasks.length > 0) {
-            const taskList = nearDeadlineTasks.map(t => `• ${t.title} (${t.deadline})`).join('<br>');
-            Swal.fire({
-                title: '⚠️ Perhatian!',
-                html: `Anda memiliki <strong>${nearDeadlineTasks.length} tugas</strong> yang mendekati deadline:<br><br>${taskList}`,
-                icon: 'warning',
-                toast: true,
-                position: 'top-end',
-                showConfirmButton: true,
-                confirmButtonText: 'Lihat',
-                timer: 5000,
-                timerProgressBar: true,
-                didOpen: (toast) => {
-                    toast.addEventListener('mouseenter', Swal.stopTimer);
-                    toast.addEventListener('mouseleave', Swal.resumeTimer);
-                }
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    document.querySelector('.space-y-3')?.scrollIntoView({ behavior: 'smooth' });
-                }
-            });
+            const lastNotified = localStorage.getItem('lastNotifiedDate');
+            const today = new Date().toDateString();
             
-            // Hapus baris localStorage.setItem('lastNotifiedDate', today);
+            if (lastNotified !== today) {
+                const taskList = nearDeadlineTasks.map(t => `• ${t.title} (${t.deadline})`).join('<br>');
+                Swal.fire({
+                    title: '⚠️ Perhatian!',
+                    html: `Anda memiliki <strong>${nearDeadlineTasks.length} tugas</strong> yang mendekati deadline:<br><br>${taskList}`,
+                    icon: 'warning',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: true,
+                    confirmButtonText: 'Lihat',
+                    timer: 8000,
+                    timerProgressBar: true,
+                    didOpen: (toast) => {
+                        toast.addEventListener('mouseenter', Swal.stopTimer);
+                        toast.addEventListener('mouseleave', Swal.resumeTimer);
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = '/dashboard';
+                    }
+                });
+                localStorage.setItem('lastNotifiedDate', today);
+            }
         }
     }, [nearDeadlineTasks]);
+
+    // Refresh data secara berkala (realtime)
+    useEffect(() => {
+        const interval = setInterval(() => {
+            fetchTasks();
+            fetchSubjects();
+        }, 30000);
+        return () => clearInterval(interval);
+    }, [fetchTasks, fetchSubjects]);
 
     const progressPercentage = stats.total === 0 ? 0 : Math.round((stats.done / stats.total) * 100);
 
@@ -159,6 +178,49 @@ export default function Dashboard() {
     const formatDate = (dateString) => {
         const options = { day: 'numeric', month: 'long', year: 'numeric' };
         return new Date(dateString).toLocaleDateString('id-ID', options);
+    };
+
+    // Fungsi handle status dengan animasi
+    const handleStatusChangeWithAnimation = async (id, newStatus) => {
+        if (newStatus === 'done') {
+            setDoneAnimating(id);
+            setTimeout(async () => {
+                try {
+                    await api.put(`/tasks/${id}`, { status: newStatus });
+                    await fetchTasks();
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Berhasil!',
+                        text: 'Tugas telah diselesaikan 🎉',
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 2000,
+                        timerProgressBar: true,
+                    });
+                } catch (error) {
+                    console.error("Gagal mengubah status", error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Gagal!',
+                        text: 'Terjadi kesalahan',
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 2000,
+                    });
+                } finally {
+                    setDoneAnimating(null);
+                }
+            }, 300);
+        } else {
+            try {
+                await api.put(`/tasks/${id}`, { status: newStatus });
+                await fetchTasks();
+            } catch (error) {
+                console.error("Gagal mengubah status", error);
+            }
+        }
     };
 
     // Modal handlers untuk task
@@ -229,15 +291,6 @@ export default function Dashboard() {
         }
     };
 
-    const handleStatusChange = async (id, newStatus) => {
-        try {
-            await api.put(`/tasks/${id}`, { status: newStatus });
-            fetchTasks();
-        } catch (error) {
-            console.error("Gagal mengubah status", error);
-        }
-    };
-
     // Handler untuk tambah mata kuliah
     const openAddSubjectModal = () => {
         setNewSubjectName('');
@@ -293,6 +346,9 @@ export default function Dashboard() {
                         <h2 className="text-lg font-bold text-slate-800 dark:text-white">
                             Tugas Mendekati Deadline
                         </h2>
+                        <span className="ml-auto text-xs text-red-500 bg-red-100 dark:bg-red-900/30 px-2 py-1 rounded-full">
+                            {nearDeadlineTasks.length} tugas
+                        </span>
                     </div>
                     <div className="space-y-3">
                         {nearDeadlineTasks.map(task => {
@@ -300,31 +356,49 @@ export default function Dashboard() {
                             return (
                                 <div 
                                     key={task.id} 
-                                    className="flex items-center justify-between p-3 rounded-xl bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/20"
+                                    id={`task-${task.id}`}
+                                    className="flex items-center justify-between p-3 rounded-xl bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/20 transition-all"
                                 >
                                     <div className="flex-1">
                                         <h3 className="font-semibold text-slate-800 dark:text-white">
                                             {task.title}
                                         </h3>
-                                        <div className="flex items-center gap-2 mt-1 text-sm text-slate-500 dark:text-slate-400">
-                                            <Calendar size={14} />
-                                            <span>Deadline: {formatDate(task.deadline)}</span>
+                                        <div className="flex items-center gap-3 mt-1 text-sm text-slate-500 dark:text-slate-400 flex-wrap">
+                                            <span className="flex items-center gap-1">
+                                                <Calendar size={14} />
+                                                Deadline: {formatDate(task.deadline)}
+                                            </span>
                                             {task.subject && (
-                                                <>
+                                                <span className="flex items-center gap-1">
                                                     <BookOpen size={14} />
-                                                    <span>{task.subject.name}</span>
-                                                </>
+                                                    {task.subject.name}
+                                                </span>
                                             )}
+                                            <span className={`text-xs font-medium ${daysRemaining === 0 ? 'text-red-600' : 'text-amber-600'}`}>
+                                                {daysRemaining === 0 ? '⚠️ Hari ini!' : `⏰ ${daysRemaining} hari lagi`}
+                                            </span>
                                         </div>
-                                        <p className={`text-xs mt-1 font-medium ${daysRemaining === 0 ? 'text-red-600' : 'text-amber-600'}`}>
-                                            {daysRemaining === 0 ? '⚠️ Deadline hari ini!' : `⏰ ${daysRemaining} hari lagi`}
-                                        </p>
                                     </div>
                                     <button
-                                        onClick={() => handleStatusChange(task.id, 'done')}
-                                        className="ml-4 px-4 py-2 bg-green-500 hover:bg-green-600 text-white text-sm font-medium rounded-lg transition-colors"
+                                        onClick={() => handleStatusChangeWithAnimation(task.id, 'done')}
+                                        disabled={doneAnimating === task.id}
+                                        className={`ml-4 px-4 py-2 bg-green-500 hover:bg-green-600 text-white text-sm font-medium rounded-lg transition-all duration-300 flex items-center gap-2 ${
+                                            doneAnimating === task.id ? 'opacity-50 scale-95 cursor-not-allowed' : 'hover:scale-105'
+                                        }`}
                                     >
-                                        Done
+                                        {doneAnimating === task.id ? (
+                                            <>
+                                                <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                </svg>
+                                                Memproses...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <CheckCircle size={16} /> Done
+                                            </>
+                                        )}
                                     </button>
                                 </div>
                             );
@@ -461,7 +535,7 @@ export default function Dashboard() {
                 {loading ? (
                     <div className="text-center py-12">
                         <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-                        <p className="mt-3 text-slate-500 dark:text-slate-400">Memuat data...</p>
+                        <p className="mt-3 text-slate-500 dark:text-slate-400">Memuat...</p>
                     </div>
                 ) : tasks.length === 0 ? (
                     <div className="text-center py-12 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700">
@@ -472,11 +546,12 @@ export default function Dashboard() {
                     tasks.map((task) => (
                         <div 
                             key={task.id} 
+                            id={`task-${task.id}`}
                             className={`p-4 bg-white dark:bg-slate-800 rounded-2xl shadow-sm hover:shadow-md border border-slate-100 dark:border-slate-700 transition-all duration-300 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 ${getDeadlineStyle(task.deadline, task.status)}`}
                         >
                             <div className="flex flex-col gap-1 flex-1">
                                 <h4 className="font-semibold text-slate-800 dark:text-white">{task.title}</h4>
-                                <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
+                                <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400 flex-wrap">
                                     {task.subject && <span>{task.subject.name}</span>}
                                     <span className="flex items-center gap-1">
                                         <Calendar size={12} />
@@ -492,8 +567,8 @@ export default function Dashboard() {
                             <div className="flex items-center gap-2 md:gap-3 flex-wrap">
                                 <select
                                     value={task.status}
-                                    onChange={(e) => handleStatusChange(task.id, e.target.value)}
-                                    className={`text-xs font-bold uppercase tracking-wider rounded-full px-3 py-1 outline-none cursor-pointer ${
+                                    onChange={(e) => handleStatusChangeWithAnimation(task.id, e.target.value)}
+                                    className={`text-xs font-bold uppercase tracking-wider rounded-full px-3 py-1 outline-none cursor-pointer transition-all ${
                                         task.status === 'done' ? 'bg-green-50 text-green-600 dark:bg-green-500/10 dark:text-green-400' :
                                         task.status === 'progress' ? 'bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400' :
                                         'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300'
@@ -532,14 +607,14 @@ export default function Dashboard() {
                             onClick={() => setPage(page - 1)} 
                             className="px-4 py-2 text-sm rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50 transition-colors"
                         >
-                            Sebelumnya
+                            Back
                         </button>
                         <button 
                             disabled={!paginationData.next_page_url} 
                             onClick={() => setPage(page + 1)} 
                             className="px-4 py-2 text-sm rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50 transition-colors"
                         >
-                            Berikutnya
+                            Next
                         </button>
                     </div>
                 </div>

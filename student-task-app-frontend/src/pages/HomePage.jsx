@@ -15,12 +15,9 @@ export default function HomePage() {
     const toggleTheme = () => setTheme(theme === 'light' ? 'dark' : 'light');
 
     const handleLogout = () => {
-        // Hapus data user dari localStorage
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         localStorage.removeItem('lastNotifiedDate');
-        
-        // Redirect ke halaman login
         navigate('/login');
     };
 
@@ -53,18 +50,35 @@ export default function HomePage() {
     if (user) {
         return (
             <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white dark:from-slate-900 dark:to-slate-800 flex flex-col">
-                {/* Topbar yang mirip dengan dashboard utama */}
+                {/* Topbar dengan Logo */}
                 <header className="sticky top-0 z-30 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-b border-slate-100 dark:border-slate-700">
-                    <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-                        <div className="flex items-center gap-4">
-                            <Link to="/" className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">StudentTask</Link>
-                        </div>
+                    <div className="max-w-7xl mx-auto px-6 py-3 flex justify-between items-center">
+                        {/* Bagian Kiri: Logo + Nama Website */}
+                        <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+                            {/* Logo untuk Light Mode */}
+                            <img
+                                src="/ST_Logo.png"
+                                alt="StudentTask Logo"
+                                className="h-9 w-auto object-contain block dark:hidden"
+                            />
+                            {/* Logo untuk Dark Mode */}
+                            <img
+                                src="/ST_Logo_Dark.png"
+                                alt="StudentTask Logo"
+                                className="h-9 w-auto object-contain hidden dark:block"
+                            />
+                            <span className="text-xl font-bold text-indigo-600 dark:text-indigo-400">
+                                StudentTask
+                            </span>
+                        </Link>
+
+                        {/* Bagian Kanan: Menu Navigasi */}
                         <div className="flex items-center gap-4">
                             <Link to="/" className="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-indigo-600 transition">Beranda</Link>
                             <Link to="/dashboard" className="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-indigo-600 transition">Dashboard</Link>
                             <Link to="/profile" className="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-indigo-600 transition">Profil</Link>
                             
-                            {/*Button Theme*/}
+                            {/* Button Theme */}
                             <button onClick={toggleTheme} className="p-2.5 rounded-full bg-white dark:bg-slate-800 shadow-sm hover:shadow-md border border-slate-100 dark:border-slate-700 text-slate-500 dark:text-slate-300 transition-all">
                                 {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
                             </button>
@@ -87,7 +101,6 @@ export default function HomePage() {
                                 
                                 {/* Dropdown Menu */}
                                 <div className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-100 dark:border-slate-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-[100]">
-                                    {/* Profil */}
                                     <button 
                                         onClick={() => navigate('/profile')}
                                         className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/50 rounded-t-xl transition-colors"
@@ -99,11 +112,7 @@ export default function HomePage() {
                                         />
                                         Profil Saya
                                     </button>
-
-                                    {/* Garis pemisah */}
                                     <div className="border-t border-slate-200 dark:border-slate-700 my-1"></div>
-
-                                    {/* Logout */}
                                     <button 
                                         onClick={handleLogout}
                                         className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-b-xl transition-colors"
@@ -122,7 +131,7 @@ export default function HomePage() {
                     <h1 className="text-3xl font-bold text-slate-800 dark:text-white mb-2">Hai, {user.name}! 👋</h1>
                     <p className="text-slate-600 dark:text-slate-300 mb-8">Berikut ringkasan tugas Anda</p>
 
-                    {/* Statistik Cards - dark mode diperbaiki */}
+                    {/* Statistik Cards */}
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-5 mb-10">
                         <div className="p-5 rounded-2xl bg-white dark:bg-slate-800 shadow-sm border border-slate-100 dark:border-slate-700">
                             <div className="flex items-center gap-3">
@@ -151,7 +160,7 @@ export default function HomePage() {
                     </div>
 
                     {/* Tugas terbaru */}
-                    <h2 className="text-xl font-semibold text-slate-800 dark:text-white mb-4">📋 Tugas Mendekati Deadline</h2>
+                    <h2 className="text-xl font-semibold text-slate-800 dark:text-white mb-4">📋 Berikut tugas-tugas yang mendekati deadline</h2>
                     {loading ? <p className="text-slate-500 dark:text-slate-400">Memuat...</p> : (
                         <div className="space-y-3">
                             {recentTasks.length === 0 ? <p className="text-slate-500 dark:text-slate-400">Belum ada tugas.</p> : recentTasks.map(task => (
@@ -173,7 +182,6 @@ export default function HomePage() {
                             ))}
                         </div>
                     )}
-                    {/* Tombol solid menuju dashboard */}
                     <div className="mt-8 text-center">
                         <Link to="/dashboard" className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold shadow-md transition">
                             Buka Dashboard Lengkap <ArrowRight size={18} />
@@ -189,19 +197,40 @@ export default function HomePage() {
     return (
         <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white dark:from-slate-900 dark:to-slate-800 flex flex-col">
             <nav className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-b border-slate-100 dark:border-slate-700 sticky top-0 z-50">
-                <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-                    <h1 className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">StudentTask</h1>
+                <div className="max-w-7xl mx-auto px-6 py-3 flex justify-between items-center">
+                    {/* Logo + Nama Website bisa diklik ke Beranda */}
+                    <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+                        {/* Logo untuk Light Mode */}
+                        <img
+                            src="/ST_Logo.png"
+                            alt="StudentTask Logo"
+                            className="h-9 w-auto object-contain block dark:hidden"
+                        />
+                        {/* Logo untuk Dark Mode */}
+                        <img
+                            src="/ST_Logo_Dark.png"
+                            alt="StudentTask Logo"
+                            className="h-9 w-auto object-contain hidden dark:block"
+                        />
+                        <span className="text-xl font-bold text-indigo-600 dark:text-indigo-400">
+                            StudentTask
+                        </span>
+                    </Link>
                     <div className="flex gap-4">
                         <Link to="/login" className="px-4 py-2 text-slate-600 dark:text-slate-300 hover:text-indigo-600 transition">Login</Link>
                         <Link to="/register" className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition">Daftar</Link>
+                        {/* Theme Toggle untuk user belum login */}
+                        <button onClick={toggleTheme} className="p-2.5 rounded-full bg-white dark:bg-slate-800 shadow-sm hover:shadow-md border border-slate-100 dark:border-slate-700 text-slate-500 dark:text-slate-300 transition-all">
+                            {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
+                        </button>
                     </div>
                 </div>
             </nav>
-            {/* Hero, fitur, CTA sama seperti sebelumnya */}
+            {/* Hero, fitur, CTA */}
             <section className="flex-1">
                 <div className="max-w-7xl mx-auto px-6 py-16 md:py-24 text-center">
-                    <h1 className="text-4xl md:text-6xl font-bold text-slate-800 dark:text-white mb-6">Kelola Tugas Kuliah <br /><span className="text-indigo-600">Lebih Mudah & Terstruktur</span></h1>
-                    <p className="text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto mb-8">StudentTask membantu mahasiswa mencatat deadline, memantau progress, dan tetap produktif sepanjang semester.</p>
+                    <h1 className="text-4xl md:text-6xl font-bold text-slate-800 dark:text-white mb-6">Kelola Tugas Kuliah  Anda<br /><span className="text-indigo-600">Menjadi Lebih Mudah & Terstruktur</span></h1>
+                    <p className="text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto mb-8">StudentTask membantu mahasiswa/pelajar mencatat deadline, memantau progress, dan tetap produktif sepanjang semester.</p>
                     <div className="flex gap-4 justify-center">
                         <Link to="/register" className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold flex items-center gap-2 shadow-lg"><Plus size={18} /> Mulai Sekarang</Link>
                         <a href="#fitur" className="px-6 py-3 border border-slate-300 dark:border-slate-600 rounded-xl text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition">Lihat Fitur</a>
