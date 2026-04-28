@@ -434,7 +434,7 @@ export default function Profile() {
                         {/* NIM */}
                         <div>
                             <label className="flex items-center gap-2 text-sm font-semibold text-slate-500 dark:text-slate-400 mb-1">
-                                <GraduationCap size={16} /> NIM
+                                <GraduationCap size={16} /> NIM / NIS
                             </label>
                             {isEditing ? (
                                 <input type="text" value={formData.nim} onChange={(e) => setFormData({...formData, nim: e.target.value})} className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none text-slate-800 dark:text-white transition-all" placeholder="Contoh: 3224005" />
@@ -472,7 +472,7 @@ export default function Profile() {
                         {/* IPK */}
                         <div>
                             <label className="flex items-center gap-2 text-sm font-semibold text-slate-500 dark:text-slate-400 mb-1">
-                                <Award size={16} /> IPK
+                                <Award size={16} /> IPK / Nilai Rata-rata
                             </label>
                             {isEditing ? (
                                 <input type="number" step="0.01" min="0" max="4" value={formData.ipk} onChange={(e) => setFormData({...formData, ipk: parseFloat(e.target.value) || 0})} className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none text-slate-800 dark:text-white transition-all" placeholder="0.00" />

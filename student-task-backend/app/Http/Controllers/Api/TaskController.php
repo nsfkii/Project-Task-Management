@@ -40,7 +40,7 @@ class TaskController extends Controller
             'pending' => (clone $query)->where('status', 'pending')->count(),
         ];
 
-        $tasks = $query->orderBy('deadline', 'asc')->paginate(5);
+        $tasks = $query->orderBy('deadline', 'asc')->paginate(6);
 
         return response()->json(['stats' => $stats, 'tasks' => $tasks]);
     }

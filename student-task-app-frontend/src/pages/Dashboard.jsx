@@ -327,10 +327,10 @@ export default function Dashboard() {
     };
 
     return (
-        <div className="space-y-4 md:space-y-6 w-full md:max-w-4xl md:mx-auto px-0 md:px-0">
+        <div className="space-y-3 sm:space-y-4 md:space-y-6 w-full px-3 sm:px-4 md:px-6 lg:max-w-5xl xl:max-w-6xl lg:mx-auto">
             {/* HEADER WELCOME */}
             <div className="text-center py-8">
-                <h1 className="text-3xl md:text-4xl font-bold text-slate-800 dark:text-white mb-2">
+                <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-slate-800 dark:text-white mb-2">
                     Selamat datang, {user?.name || 'User'}! 🎉
                 </h1>
                 <p className="text-slate-500 dark:text-slate-400 text-lg">
@@ -408,7 +408,7 @@ export default function Dashboard() {
             )}
 
             {/* STATISTIK CARDS */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
                 {/* Total Tugas */}
                 <div 
                     onClick={() => { setFilterStatus(''); setPage(1); }}
@@ -530,68 +530,151 @@ export default function Dashboard() {
                 </div>
             </div>
 
-            {/* DAFTAR TUGAS */}
-            <div className="space-y-3">
+  
+            {/* DAFTAR TUGAS - GRID CARD */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 mt-4">
                 {loading ? (
-                    <div className="text-center py-12">
+                    <div className="col-span-full text-center py-12">
                         <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-                        <p className="mt-3 text-slate-500 dark:text-slate-400">Memuat...</p>
+                        <p className="mt-3 text-slate-500 dark:text-slate-400">Memuat data...</p>
                     </div>
                 ) : tasks.length === 0 ? (
-                    <div className="text-center py-12 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700">
+                    <div className="col-span-full text-center py-12 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700">
                         <Clock className="mx-auto text-slate-300 dark:text-slate-600" size={48} />
                         <p className="mt-3 text-slate-500 dark:text-slate-400">Tidak ada tugas ditemukan</p>
                     </div>
                 ) : (
-                    tasks.map((task) => (
-                        <div 
-                            key={task.id} 
-                            id={`task-${task.id}`}
-                            className={`p-4 bg-white dark:bg-slate-800 rounded-2xl shadow-sm hover:shadow-md border border-slate-100 dark:border-slate-700 transition-all duration-300 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 ${getDeadlineStyle(task.deadline, task.status)}`}
-                        >
-                            <div className="flex flex-col gap-1 flex-1">
-                                <h4 className="font-semibold text-slate-800 dark:text-white">{task.title}</h4>
-                                <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400 flex-wrap">
-                                    {task.subject && <span>{task.subject.name}</span>}
-                                    <span className="flex items-center gap-1">
-                                        <Calendar size={12} />
-                                        {task.deadline}
-                                    </span>
+                    tasks.map((task) => {
+                        // Warna card berdasarkan prioritas
+                        let cardBg = 'bg-white dark:bg-slate-800';
+                        let cardBorder = 'border-slate-100 dark:border-slate-700';
+                        let priorityBadge = getPriorityColor(task.priority);
+                        
+                        if (task.priority === 'high') {
+                            cardBg = 'bg-red-50/80 dark:bg-red-950/30';
+                            cardBorder = 'border-red-200 dark:border-red-800/40';
+                        } else if (task.priority === 'medium') {
+                            cardBg = 'bg-amber-50/80 dark:bg-amber-950/20';
+                            cardBorder = 'border-amber-200 dark:border-amber-800/40';
+                        } else if (task.priority === 'low') {
+                            cardBg = 'bg-green-50/80 dark:bg-green-950/20';
+                            cardBorder = 'border-green-200 dark:border-green-800/40';
+                        }
+
+                        // Tambahan style deadline
+                        const deadlineStyle = getDeadlineStyle(task.deadline, task.status);
+
+                        // Fungsi cek deadline (GUNAKAN getDaysRemaining yang sudah ada)
+                        const daysRemaining = getDaysRemaining(task.deadline);
+                        const isNearDeadline = daysRemaining <= 2 && daysRemaining >= 0;
+
+                        return (
+                            <div 
+                                key={task.id} 
+                                id={`task-${task.id}`}
+                                className={`${cardBg} ${cardBorder} ${deadlineStyle} rounded-2xl shadow-sm hover:shadow-lg hover:shadow-indigo-500/5 dark:hover:shadow-black/20 transition-all duration-300 border overflow-hidden flex flex-col`}
+                            >
+                                {/* Card Body */}
+                                <div className="p-4 flex-1 flex flex-col">
+                                    {/* Judul Tugas */}
+                                    <h4 className="font-semibold text-slate-800 dark:text-white text-base leading-snug mb-2">
+                                        {task.title}
+                                    </h4>
+                                    
+                                    {/* Mata Kuliah + Dosen */}
+                                    <div className="text-xs text-slate-500 dark:text-slate-400 mb-2 space-y-0.5">
+                                        {task.subject && (
+                                            <p className="font-medium text-indigo-600 dark:text-indigo-400">
+                                                📚 {task.subject.name}
+                                            </p>
+                                        )}
+                                        {task.lecturer && (
+                                            <p className="flex items-center gap-1">
+                                                👨‍🏫 {task.lecturer}
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    {/* Deskripsi */}
+                                    {task.description && (
+                                        <div className="mb-3 pl-3 border-l-2 border-indigo-300 dark:border-indigo-700">
+                                            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed line-clamp-3">
+                                                {task.description}
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    {/* Spacer */}
+                                    <div className="flex-1"></div>
+
+                                    {/* Footer: Deadline + Priority */}
+                                    <div className="flex items-center justify-between gap-2 pt-3 border-t border-slate-200 dark:border-slate-700">
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            {/* Deadline */}
+                                            <span className={`text-xs px-2.5 py-1 rounded-full font-medium flex items-center gap-1 ${
+                                                isNearDeadline && task.status !== 'done' 
+                                                    ? 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400' 
+                                                    : 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300'
+                                            }`}>
+                                                <Calendar size={12} />
+                                                {task.deadline}
+                                            </span>
+                                            {/* Priority */}
+                                            <span className={`px-2 py-0.5 rounded-full text-xs font-bold uppercase ${priorityBadge}`}>
+                                                {task.priority}
+                                            </span>
+                                        </div>
+                                        {/* Status */}
+                                        <select
+                                            value={task.status}
+                                            onChange={(e) => handleStatusChangeWithAnimation(task.id, e.target.value)}
+                                            className={`text-xs font-bold uppercase rounded-full px-2.5 py-1 outline-none cursor-pointer border transition-all ${
+                                                task.status === 'done' 
+                                                    ? 'bg-green-100 text-green-700 border-green-300 dark:bg-green-500/20 dark:text-green-400 dark:border-green-500/30' 
+                                                    : task.status === 'progress'
+                                                    ? 'bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-500/20 dark:text-blue-400 dark:border-blue-500/30'
+                                                    : 'bg-slate-100 text-slate-600 border-slate-300 dark:bg-slate-700 dark:text-slate-300 dark:border-slate-600'
+                                            }`}
+                                        >
+                                            <option value="pending">⏳ Pending</option>
+                                            <option value="progress">🔄 Progress</option>
+                                            <option value="done">✅ Selesai</option>
+                                        </select>
+                                    </div>
+
+                                    {/* Link Sumber */}
+                                    {task.source_url && (
+                                        <div className="mt-2 pt-2 border-t border-slate-200 dark:border-slate-700">
+                                            <a 
+                                                href={task.source_url} 
+                                                target="_blank" 
+                                                rel="noopener noreferrer" 
+                                                className="inline-flex items-center gap-1.5 text-xs font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors"
+                                            >
+                                                <ExternalLink size={13} /> Link Tugas
+                                            </a>
+                                        </div>
+                                    )}
                                 </div>
-                                {task.source_url && (
-                                    <a href={task.source_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 mt-1 w-fit">
-                                        <ExternalLink size={12} /> Sumber Tugas
-                                    </a>
-                                )}
-                            </div>
-                            <div className="flex items-center gap-2 md:gap-3 flex-wrap">
-                                <select
-                                    value={task.status}
-                                    onChange={(e) => handleStatusChangeWithAnimation(task.id, e.target.value)}
-                                    className={`text-xs font-bold uppercase tracking-wider rounded-full px-3 py-1 outline-none cursor-pointer transition-all ${
-                                        task.status === 'done' ? 'bg-green-50 text-green-600 dark:bg-green-500/10 dark:text-green-400' :
-                                        task.status === 'progress' ? 'bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400' :
-                                        'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300'
-                                    }`}
-                                >
-                                    <option value="pending">Pending</option>
-                                    <option value="progress">Progress</option>
-                                    <option value="done">Selesai</option>
-                                </select>
-                                <span className={`px-2.5 py-1 rounded-full text-xs font-bold uppercase ${getPriorityColor(task.priority)}`}>
-                                    {task.priority}
-                                </span>
-                                <div className="flex gap-1">
-                                    <button onClick={() => openModal(task)} className="p-1.5 text-slate-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-slate-700 rounded-lg transition-colors">
-                                        <Edit size={16} />
+
+                                {/* Action Footer */}
+                                <div className="flex border-t border-slate-200 dark:border-slate-700">
+                                    <button 
+                                        onClick={() => openModal(task)} 
+                                        className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-all"
+                                    >
+                                        <Edit size={14} /> Edit
                                     </button>
-                                    <button onClick={() => handleDelete(task.id)} className="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-slate-700 rounded-lg transition-colors">
-                                        <Trash2 size={16} />
+                                    <button 
+                                        onClick={() => handleDelete(task.id)} 
+                                        className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium text-slate-500 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all border-l border-slate-200 dark:border-slate-700"
+                                    >
+                                        <Trash2 size={14} /> Hapus
                                     </button>
                                 </div>
                             </div>
-                        </div>
-                    ))
+                        );
+                    })
                 )}
             </div>
 

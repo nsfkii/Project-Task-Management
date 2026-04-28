@@ -1,3 +1,168 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ========== BASE STYLES ========== */
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+    scroll-behavior: smooth;
+  }
+  
+  body {
+    @apply bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-white;
+    min-height: 100vh;
+    min-height: 100dvh; /* Dynamic viewport height untuk mobile */
+  }
+
+  /* Scrollbar styling */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    @apply bg-slate-300 dark:bg-slate-600 rounded-full;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-slate-400 dark:bg-slate-500;
+  }
+}
+
+/* ========== COMPONENT STYLES ========== */
+@layer components {
+  /* Responsive container */
+  .container-responsive {
+    @apply w-full px-3 sm:px-4 md:px-6 lg:px-8 mx-auto;
+    max-width: 100%;
+  }
+  
+  @screen sm {
+    .container-responsive {
+      max-width: 640px;
+    }
+  }
+  
+  @screen md {
+    .container-responsive {
+      max-width: 768px;
+    }
+  }
+  
+  @screen lg {
+    .container-responsive {
+      max-width: 1024px;
+    }
+  }
+  
+  @screen xl {
+    .container-responsive {
+      max-width: 1280px;
+    }
+  }
+
+  /* Card responsive */
+  .card-responsive {
+    @apply bg-white dark:bg-slate-800 rounded-xl sm:rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 p-3 sm:p-4 md:p-5;
+  }
+
+  /* Button touch-friendly */
+  .btn-touch {
+    @apply min-h-[44px] min-w-[44px] flex items-center justify-center;
+  }
+
+  /* Text truncate */
+  .text-truncate {
+    @apply overflow-hidden text-ellipsis whitespace-nowrap;
+  }
+}
+
+/* ========== UTILITIES ========== */
+@layer utilities {
+  /* Safe area untuk iPhone notch */
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+  
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  .safe-left {
+    padding-left: env(safe-area-inset-left);
+  }
+  
+  .safe-right {
+    padding-right: env(safe-area-inset-right);
+  }
+
+  /* Text balance untuk heading */
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Animation */
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+  }
+  
+  .animate-slide-up {
+    animation: slideUp 0.3s ease-in-out;
+  }
+  
+  .animate-slide-down {
+    animation: slideDown 0.3s ease-in-out;
+  }
+
+  /* Hide scrollbar but keep functionality */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* ========== KEYFRAMES ========== */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(10px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes slideDown {
+  from { transform: translateY(-10px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* ========== RESPONSIVE TABLE ========== */
+@media (max-width: 768px) {
+  .table-responsive {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* ========== PRINT STYLES ========== */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  body {
+    @apply bg-white text-black;
+  }
+}

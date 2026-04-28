@@ -42,7 +42,7 @@ const screenshots = [
     {
         id: 6,
         title: 'Notifikasi',
-        description: 'Dapatkan menyelesaikan (Done) & pengingat tugas mendekati deadline',
+        description: 'Dapatkan pengingat untuk tugas yang mendekati deadline & selelesaikan (Done)',
         image: '/ST_Notifikasi_Deadline.png',
         alt: 'Notifikasi deadline'
     }
