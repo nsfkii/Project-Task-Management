@@ -252,9 +252,24 @@ export default function Dashboard() {
         setCurrentTask(null);
     };
 
+    // Fungsi Submit dengan SweetAlert2
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsSubmitting(true);
+        
+        Swal.fire({
+            title: 'Menyimpan...',
+            text: 'Sedang memproses data',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            },
+            background: '#ffffff',
+            customClass: {
+                popup: 'rounded-2xl dark:bg-slate-800'
+            }
+        });
+
         try {
             const payload = {
                 title: formData.title,
@@ -271,22 +286,97 @@ export default function Dashboard() {
                 await api.post('/tasks', payload);
             }
             closeModal();
-            fetchTasks();
+            await fetchTasks();
+            
+            Swal.close();
+            Swal.fire({
+                icon: 'success',
+                title: 'Berhasil!',
+                text: currentTask ? 'Tugas berhasil diperbarui ✏️' : 'Tugas berhasil ditambahkan ✅',
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 2000,
+                timerProgressBar: true,
+            });
         } catch (error) {
             console.error("Gagal menyimpan tugas", error);
-            alert("Terjadi kesalahan! Pastikan semua kolom terisi dengan benar.");
+            Swal.close();
+            Swal.fire({
+                icon: 'error',
+                title: 'Gagal!',
+                text: error.response?.data?.message || 'Terjadi kesalahan! Pastikan semua kolom terisi dengan benar.',
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000,
+            });
         } finally {
             setIsSubmitting(false);
         }
     };
 
-    const handleDelete = async (id) => {
-        if (window.confirm("Yakin ingin menghapus tugas ini?")) {
+    // Fungsi Delete dengan SweetAlert2
+    const handleDelete = async (id, taskTitle) => {
+        const result = await Swal.fire({
+            title: 'Hapus Tugas?',
+            html: `Apakah Anda yakin ingin menghapus tugas <strong>"${taskTitle}"</strong>?`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#6366f1',
+            confirmButtonText: 'Ya, Hapus!',
+            cancelButtonText: 'Batal',
+            background: '#ffffff',
+            customClass: {
+                popup: 'rounded-2xl shadow-xl dark:bg-slate-800',
+                title: 'text-slate-800 dark:text-white',
+                confirmButton: 'px-4 py-2 rounded-lg font-semibold',
+                cancelButton: 'px-4 py-2 rounded-lg font-semibold'
+            }
+        });
+
+        if (result.isConfirmed) {
+            Swal.fire({
+                title: 'Menghapus...',
+                text: 'Sedang memproses penghapusan',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                },
+                background: '#ffffff',
+                customClass: {
+                    popup: 'rounded-2xl dark:bg-slate-800'
+                }
+            });
+
             try {
                 await api.delete(`/tasks/${id}`);
-                fetchTasks();
+                await fetchTasks();
+                
+                Swal.close();
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil!',
+                    text: 'Tugas berhasil dihapus 🗑️',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 2000,
+                    timerProgressBar: true,
+                });
             } catch (error) {
                 console.error("Gagal menghapus tugas", error);
+                Swal.close();
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal!',
+                    text: 'Terjadi kesalahan saat menghapus tugas',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 2000,
+                });
             }
         }
     };
@@ -302,13 +392,36 @@ export default function Dashboard() {
         setIsAddSubjectModalOpen(false);
     };
 
+    // Fungsi Add Subject dengan SweetAlert2
     const handleAddSubject = async (e) => {
         e.preventDefault();
         if (!newSubjectName.trim()) {
-            alert("Nama mata kuliah tidak boleh kosong");
+            Swal.fire({
+                icon: 'warning',
+                title: 'Oops...',
+                text: 'Nama mata kuliah tidak boleh kosong',
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 2000,
+            });
             return;
         }
         setIsAddingSubject(true);
+        
+        Swal.fire({
+            title: 'Menyimpan...',
+            text: 'Sedang menambah mata kuliah',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            },
+            background: '#ffffff',
+            customClass: {
+                popup: 'rounded-2xl dark:bg-slate-800'
+            }
+        });
+
         try {
             const response = await api.post('/subjects', {
                 name: newSubjectName.trim(),
@@ -318,9 +431,29 @@ export default function Dashboard() {
             await fetchSubjects();
             setFormData(prev => ({ ...prev, subject_id: newSubject.id }));
             closeAddSubjectModal();
+            
+            Swal.close();
+            Swal.fire({
+                icon: 'success',
+                title: 'Berhasil!',
+                text: 'Mata kuliah berhasil ditambahkan 📚',
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 2000,
+            });
         } catch (error) {
             console.error("Gagal menambah mata kuliah", error);
-            alert(error.response?.data?.message || "Terjadi kesalahan saat menambah mata kuliah");
+            Swal.close();
+            Swal.fire({
+                icon: 'error',
+                title: 'Gagal!',
+                text: error.response?.data?.message || 'Terjadi kesalahan saat menambah mata kuliah',
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000,
+            });
         } finally {
             setIsAddingSubject(false);
         }
@@ -530,7 +663,6 @@ export default function Dashboard() {
                 </div>
             </div>
 
-  
             {/* DAFTAR TUGAS - GRID CARD */}
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 mt-4">
                 {loading ? (
@@ -545,7 +677,6 @@ export default function Dashboard() {
                     </div>
                 ) : (
                     tasks.map((task) => {
-                        // Warna card berdasarkan prioritas
                         let cardBg = 'bg-white dark:bg-slate-800';
                         let cardBorder = 'border-slate-100 dark:border-slate-700';
                         let priorityBadge = getPriorityColor(task.priority);
@@ -561,10 +692,7 @@ export default function Dashboard() {
                             cardBorder = 'border-green-200 dark:border-green-800/40';
                         }
 
-                        // Tambahan style deadline
                         const deadlineStyle = getDeadlineStyle(task.deadline, task.status);
-
-                        // Fungsi cek deadline (GUNAKAN getDaysRemaining yang sudah ada)
                         const daysRemaining = getDaysRemaining(task.deadline);
                         const isNearDeadline = daysRemaining <= 2 && daysRemaining >= 0;
 
@@ -574,28 +702,19 @@ export default function Dashboard() {
                                 id={`task-${task.id}`}
                                 className={`${cardBg} ${cardBorder} ${deadlineStyle} rounded-2xl shadow-sm hover:shadow-lg hover:shadow-indigo-500/5 dark:hover:shadow-black/20 transition-all duration-300 border overflow-hidden flex flex-col`}
                             >
-                                {/* Card Body */}
                                 <div className="p-4 flex-1 flex flex-col">
-                                    {/* Judul Tugas */}
                                     <h4 className="font-semibold text-slate-800 dark:text-white text-base leading-snug mb-2">
                                         {task.title}
                                     </h4>
                                     
-                                    {/* Mata Kuliah + Dosen */}
                                     <div className="text-xs text-slate-500 dark:text-slate-400 mb-2 space-y-0.5">
                                         {task.subject && (
                                             <p className="font-medium text-indigo-600 dark:text-indigo-400">
                                                 📚 {task.subject.name}
                                             </p>
                                         )}
-                                        {task.lecturer && (
-                                            <p className="flex items-center gap-1">
-                                                👨‍🏫 {task.lecturer}
-                                            </p>
-                                        )}
                                     </div>
 
-                                    {/* Deskripsi */}
                                     {task.description && (
                                         <div className="mb-3 pl-3 border-l-2 border-indigo-300 dark:border-indigo-700">
                                             <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed line-clamp-3">
@@ -604,13 +723,10 @@ export default function Dashboard() {
                                         </div>
                                     )}
 
-                                    {/* Spacer */}
                                     <div className="flex-1"></div>
 
-                                    {/* Footer: Deadline + Priority */}
                                     <div className="flex items-center justify-between gap-2 pt-3 border-t border-slate-200 dark:border-slate-700">
                                         <div className="flex items-center gap-2 flex-wrap">
-                                            {/* Deadline */}
                                             <span className={`text-xs px-2.5 py-1 rounded-full font-medium flex items-center gap-1 ${
                                                 isNearDeadline && task.status !== 'done' 
                                                     ? 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400' 
@@ -619,12 +735,10 @@ export default function Dashboard() {
                                                 <Calendar size={12} />
                                                 {task.deadline}
                                             </span>
-                                            {/* Priority */}
                                             <span className={`px-2 py-0.5 rounded-full text-xs font-bold uppercase ${priorityBadge}`}>
                                                 {task.priority}
                                             </span>
                                         </div>
-                                        {/* Status */}
                                         <select
                                             value={task.status}
                                             onChange={(e) => handleStatusChangeWithAnimation(task.id, e.target.value)}
@@ -642,7 +756,6 @@ export default function Dashboard() {
                                         </select>
                                     </div>
 
-                                    {/* Link Sumber */}
                                     {task.source_url && (
                                         <div className="mt-2 pt-2 border-t border-slate-200 dark:border-slate-700">
                                             <a 
@@ -657,7 +770,6 @@ export default function Dashboard() {
                                     )}
                                 </div>
 
-                                {/* Action Footer */}
                                 <div className="flex border-t border-slate-200 dark:border-slate-700">
                                     <button 
                                         onClick={() => openModal(task)} 
@@ -666,7 +778,7 @@ export default function Dashboard() {
                                         <Edit size={14} /> Edit
                                     </button>
                                     <button 
-                                        onClick={() => handleDelete(task.id)} 
+                                        onClick={() => handleDelete(task.id, task.title)} 
                                         className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium text-slate-500 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all border-l border-slate-200 dark:border-slate-700"
                                     >
                                         <Trash2 size={14} /> Hapus
@@ -703,7 +815,7 @@ export default function Dashboard() {
                 </div>
             )}
 
-            {/* MODAL TUGAS */}
+            {/* MODAL TUGAS - tetap sama */}
             {isModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
                     <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
@@ -805,7 +917,7 @@ export default function Dashboard() {
                 </div>
             )}
 
-            {/* MODAL TAMBAH MATA KULIAH */}
+            {/* MODAL TAMBAH MATA KULIAH - tetap sama */}
             {isAddSubjectModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
                     <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl w-full max-w-md">
