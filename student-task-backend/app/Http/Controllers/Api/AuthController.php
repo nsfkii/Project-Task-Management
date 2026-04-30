@@ -58,7 +58,8 @@ class AuthController extends Controller
             'user' => $user
         ]);
     }
-    // Fungsi Update Profil
+
+    // 3. UPDATE PROFILE (LENGKAP)
     public function updateProfile(Request $request)
     {
         $user = Auth::user();
@@ -66,13 +67,34 @@ class AuthController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|unique:users,email,'.$user->id,
-            'avatar' => 'nullable|image|mimes:jpeg,png,jpg|max:2048' // Maks 2MB
+            'avatar' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'nim' => 'nullable|string|max:20',
+            'program_studi' => 'nullable|string|max:255',
+            'semester' => 'nullable|integer|min:1|max:14',
+            'ipk' => 'nullable|numeric|min:0|max:4',
+            'bio' => 'nullable|string',
+            'github' => 'nullable|url',
+            'linkedin' => 'nullable|url',
+            'instagram' => 'nullable|url',
+            'website' => 'nullable|url',
         ]);
 
+        // Update basic info
         $user->name = $request->name;
         $user->email = $request->email;
+        
+        // Update profile fields
+        $user->nim = $request->nim;
+        $user->program_studi = $request->program_studi;
+        $user->semester = $request->semester ?? $user->semester ?? 1;
+        $user->ipk = $request->ipk ?? $user->ipk ?? 0;
+        $user->bio = $request->bio;
+        $user->github = $request->github;
+        $user->linkedin = $request->linkedin;
+        $user->instagram = $request->instagram;
+        $user->website = $request->website;
 
-        // Jika user upload foto baru
+        // Upload avatar if exists
         if ($request->hasFile('avatar')) {
             $avatarPath = $request->file('avatar')->store('avatars', 'public');
             $user->avatar = $avatarPath;
@@ -85,7 +107,14 @@ class AuthController extends Controller
             'user' => $user
         ]);
     }
-    // 3. LOGOUT
+
+    // 4. GET USER (PROFILE)
+    public function getUser(Request $request)
+    {
+        return response()->json($request->user());
+    }
+
+    // 5. LOGOUT
     public function logout(Request $request)
     {
         // Menghapus token yang sedang digunakan

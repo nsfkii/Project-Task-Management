@@ -802,7 +802,7 @@ export default function Dashboard() {
                             onClick={() => setPage(page - 1)} 
                             className="px-4 py-2 text-sm rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50 transition-colors"
                         >
-                            Back
+                            Previous
                         </button>
                         <button 
                             disabled={!paginationData.next_page_url} 

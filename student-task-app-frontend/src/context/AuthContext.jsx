@@ -6,22 +6,32 @@ export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
+    const [userProfile, setUserProfile] = useState(null); // <-- Cache untuk profile
     const [token, setToken] = useState(localStorage.getItem('token') || '');
     const [theme, setTheme] = useState('light');
     const [loading, setLoading] = useState(true);
 
     const logout = () => {
         setUser(null);
+        setUserProfile(null); // <-- Clear cache profile
         setToken('');
         localStorage.removeItem('token');
+        localStorage.removeItem('mahasiswaData');
+        localStorage.removeItem('lastNotifiedDate');
     };
 
     const login = (userData, userToken) => {
         setUser(userData);
+        setUserProfile(userData); // <-- Cache profile saat login
         setToken(userToken);
+        setTheme(userData.theme || 'dark');
         localStorage.setItem('token', userToken);
-        localStorage.setItem('user', JSON.stringify(userData)); // <-- tambahkan ini
-        setTheme(userData.theme || 'light');
+    };
+
+    // Fungsi untuk update profile (dipanggil setelah edit profile)
+    const updateUserProfile = (profileData) => {
+        setUserProfile(profileData);
+        setUser(profileData);
     };
 
     useEffect(() => {
@@ -30,6 +40,7 @@ export const AuthProvider = ({ children }) => {
                 try {
                     const response = await api.get('/user');
                     setUser(response.data);
+                    setUserProfile(response.data); // <-- Cache profile
                     setTheme(response.data.theme || 'light');
                 } catch (error) {
                     console.error("Token tidak valid", error);
@@ -53,7 +64,9 @@ export const AuthProvider = ({ children }) => {
     return (
         <AuthContext.Provider value={{
             user,
+            userProfile,      
             setUser,
+            updateUserProfile,  
             token,
             theme,
             setTheme,

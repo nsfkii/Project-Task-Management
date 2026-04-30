@@ -6,7 +6,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\TaskController;
 use App\Http\Controllers\Api\SocialAuthController;
 use App\Http\Controllers\Api\SubjectController;
-use App\Http\Controllers\Api\OrganizationLinkController; // Tambahkan import
+use App\Http\Controllers\Api\OrganizationLinkController;
 
 // Public Routes (Bisa diakses tanpa login)
 Route::post('/register', [AuthController::class, 'register']);
@@ -18,9 +18,11 @@ Route::get('/auth/google/callback', [SocialAuthController::class, 'handleGoogleC
 
 // Protected Routes (Hanya bisa diakses jika punya token / sudah login)
 Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/user', function (Request $request) {return $request->user();});
-    Route::post('/logout', [AuthController::class, 'logout']);
+    
+    // User & Profile
+    Route::get('/user', [AuthController::class, 'getUser']); // Pakai method getUser
     Route::post('/profile', [AuthController::class, 'updateProfile']);
+    Route::post('/logout', [AuthController::class, 'logout']);
     
     // Route untuk Task (CRUD)
     Route::apiResource('/tasks', TaskController::class);

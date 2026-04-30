@@ -1,5 +1,5 @@
 // src/pages/Profile.jsx
-import { useState, useContext, useRef, useEffect } from 'react';
+import { useState, useContext, useRef, useEffect, useCallback } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { 
     User, Mail, GraduationCap, Edit2, Save, X, Camera, BookOpen, 
@@ -10,28 +10,16 @@ import Swal from 'sweetalert2';
 import api from '../api/axios';
 
 export default function Profile() {
-    const { user, setUser } = useContext(AuthContext);
+    const { user, userProfile, updateUserProfile, setUser } = useContext(AuthContext);
     const [isEditing, setIsEditing] = useState(false);
     const [loading, setLoading] = useState(false);
     const [taskStats, setTaskStats] = useState({ total: 0, done: 0, progress: 0, pending: 0 });
     const fileInputRef = useRef(null);
 
-    // State mahasiswaData
-    const [mahasiswaData, setMahasiswaData] = useState({
-        nim: '',
-        program_studi: '',
-        semester: 1,
-        ipk: 0,
-        bio: '',
-        github: '',
-        linkedin: '',
-        website: '',
-        instagram: ''
-    });
-
+    // State untuk form data
     const [formData, setFormData] = useState({
-        name: user?.name || '',
-        email: user?.email || '',
+        name: '',
+        email: '',
         nim: '',
         program_studi: '',
         semester: 1,
@@ -44,61 +32,93 @@ export default function Profile() {
     });
 
     const [avatarFile, setAvatarFile] = useState(null);
-    const [previewUrl, setPreviewUrl] = useState(
-        user?.avatar ? `http://127.0.0.1:8000/storage/${user.avatar}` : null
-    );
+    const [previewUrl, setPreviewUrl] = useState(null);
 
     // State untuk Organization Links
     const [orgLinks, setOrgLinks] = useState([]);
     const [newLink, setNewLink] = useState({ name: '', url: '' });
-    const [addingLink, setAddingLink] = useState(false); // Loading state untuk tambah link
+    const [addingLink, setAddingLink] = useState(false);
 
-    // Load data dari localStorage
-    useEffect(() => {
-        const saved = localStorage.getItem('mahasiswaData');
-        if (saved) {
-            try {
-                const parsed = JSON.parse(saved);
-                setMahasiswaData(parsed);
-                setFormData(prev => ({ ...prev, ...parsed }));
-            } catch (e) {
-                console.error("Gagal parse mahasiswaData:", e);
-            }
+    // Fungsi fetchUserData dibungkus useCallback
+    const fetchUserData = useCallback(async () => {
+        try {
+            const response = await api.get('/user');
+            const userData = response.data;
+            setFormData({
+                name: userData.name || '',
+                email: userData.email || '',
+                nim: userData.nim || '',
+                program_studi: userData.program_studi || '',
+                semester: userData.semester || 1,
+                ipk: userData.ipk || 0,
+                bio: userData.bio || '',
+                github: userData.github || '',
+                linkedin: userData.linkedin || '',
+                website: userData.website || '',
+                instagram: userData.instagram || ''
+            });
+            setPreviewUrl(userData.avatar ? `${import.meta.env.VITE_STORAGE_URL || 'http://127.0.0.1:8000/storage'}/${userData.avatar}` : null);
+            updateUserProfile(userData);
+        } catch (error) {
+            console.error("Gagal mengambil data user:", error);
         }
-    }, []);
+    }, [updateUserProfile]);
+
+    // Fetch data user dari cache atau API
+    useEffect(() => {
+        if (userProfile) {
+            setFormData({
+                name: userProfile.name || '',
+                email: userProfile.email || '',
+                nim: userProfile.nim || '',
+                program_studi: userProfile.program_studi || '',
+                semester: userProfile.semester || 1,
+                ipk: userProfile.ipk || 0,
+                bio: userProfile.bio || '',
+                github: userProfile.github || '',
+                linkedin: userProfile.linkedin || '',
+                website: userProfile.website || '',
+                instagram: userProfile.instagram || ''
+            });
+            setPreviewUrl(userProfile.avatar ? `${import.meta.env.VITE_STORAGE_URL || 'http://127.0.0.1:8000/storage'}/${userProfile.avatar}` : null);
+        } else {
+            fetchUserData();
+        }
+    }, [userProfile, fetchUserData]);
 
     // Fetch organization links
-    const fetchOrgLinks = async () => {
+    const fetchOrgLinks = useCallback(async () => {
         try {
             const response = await api.get('/organization-links');
-            const links = response.data.data || response.data || [];
-            setOrgLinks(links);
+            setOrgLinks(response.data.data || response.data || []);
         } catch (error) {
             console.error("Gagal mengambil organization links:", error);
         }
-    };
+    }, []);
 
     useEffect(() => {
         fetchOrgLinks();
-    }, []);
+    }, [fetchOrgLinks]);
 
-    const fetchTaskStats = async () => {
+    // Fetch task stats
+    const fetchTaskStats = useCallback(async () => {
         try {
             const response = await api.get('/tasks?all=true');
             const tasks = response.data;
-            const total = tasks.length;
-            const done = tasks.filter(t => t.status === 'done').length;
-            const progress = tasks.filter(t => t.status === 'progress').length;
-            const pending = tasks.filter(t => t.status === 'pending').length;
-            setTaskStats({ total, done, progress, pending });
+            setTaskStats({
+                total: tasks.length,
+                done: tasks.filter(t => t.status === 'done').length,
+                progress: tasks.filter(t => t.status === 'progress').length,
+                pending: tasks.filter(t => t.status === 'pending').length
+            });
         } catch (error) {
             console.error("Gagal mengambil statistik tugas", error);
         }
-    };
+    }, []);
 
     useEffect(() => {
         fetchTaskStats();
-    }, []);
+    }, [fetchTaskStats]);
 
     const handleFileChange = (e) => {
         const file = e.target.files[0];
@@ -132,34 +152,32 @@ export default function Profile() {
         const data = new FormData();
         data.append('name', formData.name);
         data.append('email', formData.email);
+        data.append('nim', formData.nim);
+        data.append('program_studi', formData.program_studi);
+        data.append('semester', formData.semester);
+        data.append('ipk', formData.ipk);
+        data.append('bio', formData.bio);
+        data.append('github', formData.github);
+        data.append('linkedin', formData.linkedin);
+        data.append('instagram', formData.instagram);
+        data.append('website', formData.website);
         if (avatarFile) data.append('avatar', avatarFile);
         
         try {
             const response = await api.post('/profile', data, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
+            
+            updateUserProfile(response.data.user);
             setUser(response.data.user);
             
-            const newMahasiswaData = {
-                nim: formData.nim,
-                program_studi: formData.program_studi,
-                semester: formData.semester,
-                ipk: formData.ipk,
-                bio: formData.bio,
-                github: formData.github,
-                linkedin: formData.linkedin,
-                website: formData.website,
-                instagram: formData.instagram
-            };
-            
-            setMahasiswaData(newMahasiswaData);
-            localStorage.setItem('mahasiswaData', JSON.stringify(newMahasiswaData));
             setIsEditing(false);
+            setAvatarFile(null);
             
             Swal.fire({
                 icon: 'success',
                 title: 'Berhasil!',
-                text: 'Profil berhasil diperbarui!',
+                text: 'Profil berhasil diperbarui! 🎉',
                 timer: 2000,
                 showConfirmButton: false
             });
@@ -178,24 +196,26 @@ export default function Profile() {
 
     const handleCancel = () => {
         setIsEditing(false);
-        setFormData({
-            name: user?.name || '',
-            email: user?.email || '',
-            nim: mahasiswaData.nim,
-            program_studi: mahasiswaData.program_studi,
-            semester: mahasiswaData.semester,
-            ipk: mahasiswaData.ipk,
-            bio: mahasiswaData.bio,
-            github: mahasiswaData.github,
-            linkedin: mahasiswaData.linkedin,
-            website: mahasiswaData.website,
-            instagram: mahasiswaData.instagram
-        });
-        setPreviewUrl(user?.avatar ? `http://127.0.0.1:8000/storage/${user.avatar}` : null);
         setAvatarFile(null);
+        if (userProfile) {
+            setFormData({
+                name: userProfile.name || '',
+                email: userProfile.email || '',
+                nim: userProfile.nim || '',
+                program_studi: userProfile.program_studi || '',
+                semester: userProfile.semester || 1,
+                ipk: userProfile.ipk || 0,
+                bio: userProfile.bio || '',
+                github: userProfile.github || '',
+                linkedin: userProfile.linkedin || '',
+                website: userProfile.website || '',
+                instagram: userProfile.instagram || ''
+            });
+            setPreviewUrl(userProfile.avatar ? `${import.meta.env.VITE_STORAGE_URL || 'http://127.0.0.1:8000/storage'}/${userProfile.avatar}` : null);
+        }
     };
 
-    // Organization Links CRUD dengan SweetAlert2
+    // Organization Links CRUD
     const addOrgLink = async () => {
         if (!newLink.name.trim() || !newLink.url.trim()) {
             Swal.fire({
@@ -225,7 +245,7 @@ export default function Profile() {
             return;
         }
         
-        setAddingLink(true); // Mulai loading
+        setAddingLink(true);
         try {
             await api.post('/organization-links', newLink);
             setNewLink({ name: '', url: '' });
@@ -247,14 +267,14 @@ export default function Profile() {
                 confirmButtonColor: '#4F46E5'
             });
         } finally {
-            setAddingLink(false); // Stop loading
+            setAddingLink(false);
         }
     };
 
     const updateOrgLink = async (id, data) => {
         try {
             await api.put(`/organization-links/${id}`, data);
-            fetchOrgLinks();
+            await fetchOrgLinks();
             
             Swal.fire({
                 icon: 'success',
@@ -290,7 +310,7 @@ export default function Profile() {
         if (result.isConfirmed) {
             try {
                 await api.delete(`/organization-links/${id}`);
-                fetchOrgLinks();
+                await fetchOrgLinks();
                 
                 Swal.fire({
                     icon: 'success',
@@ -311,36 +331,11 @@ export default function Profile() {
         }
     };
 
-    // Daftar social media dengan icon lucide-react
     const socialLinks = [
-        { 
-            icon: Globe, 
-            label: 'Website', 
-            state: 'website',
-            color: 'text-blue-500',
-            bg: 'bg-blue-50 dark:bg-blue-500/10'
-        },
-        { 
-            icon: Linkedin, 
-            label: 'LinkedIn', 
-            state: 'linkedin',
-            color: 'text-blue-700',
-            bg: 'bg-blue-50 dark:bg-blue-500/10'
-        },
-        { 
-            icon: Github, 
-            label: 'GitHub', 
-            state: 'github',
-            color: 'text-gray-700 dark:text-gray-300',
-            bg: 'bg-gray-50 dark:bg-gray-500/10'
-        },
-        { 
-            icon: Instagram, 
-            label: 'Instagram', 
-            state: 'instagram',
-            color: 'text-pink-500',
-            bg: 'bg-pink-50 dark:bg-pink-500/10'
-        }
+        { icon: Globe, label: 'Website', state: 'website', color: 'text-blue-500', bg: 'bg-blue-50 dark:bg-blue-500/10' },
+        { icon: Linkedin, label: 'LinkedIn', state: 'linkedin', color: 'text-blue-700', bg: 'bg-blue-50 dark:bg-blue-500/10' },
+        { icon: Github, label: 'GitHub', state: 'github', color: 'text-gray-700 dark:text-gray-300', bg: 'bg-gray-50 dark:bg-gray-500/10' },
+        { icon: Instagram, label: 'Instagram', state: 'instagram', color: 'text-pink-500', bg: 'bg-pink-50 dark:bg-pink-500/10' }
     ];
 
     return (
@@ -350,12 +345,11 @@ export default function Profile() {
 
             {/* Kartu Profil */}
             <div className="bg-white dark:bg-slate-800 rounded-b-2xl shadow-xl border border-slate-100 dark:border-slate-700 -mt-12 relative z-10">
-                {/* Header dengan Avatar dan Tombol Edit */}
                 <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 px-6 pt-4 pb-2">
                     <div className="flex items-center gap-4">
                         <div className="relative group">
                             <img
-                                src={previewUrl || `https://ui-avatars.com/api/?name=${user?.name || 'User'}&background=6366f1&color=fff&size=96`}
+                                src={previewUrl || `https://ui-avatars.com/api/?name=${formData.name || 'User'}&background=6366f1&color=fff&size=96`}
                                 alt="Avatar"
                                 className="h-20 w-20 rounded-full border-4 border-white dark:border-slate-800 shadow-md object-cover object-center group-hover:ring-2 group-hover:ring-indigo-400 transition-all"
                             />
@@ -377,8 +371,12 @@ export default function Profile() {
                             />
                         </div>
                         <div>
-                            <h2 className="text-xl font-bold text-slate-800 dark:text-white">{user?.name}</h2>
-                            <p className="text-sm text-slate-500 dark:text-slate-400">{user?.email}</p>
+                            <h2 className="text-xl font-bold text-slate-800 dark:text-white">
+                                {formData.name || user?.name}
+                            </h2>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">
+                                {formData.email || user?.email}
+                            </p>
                         </div>
                     </div>
                     {!isEditing && (
@@ -397,10 +395,10 @@ export default function Profile() {
                         <GraduationCap size={12} /> Mahasiswa Aktif
                     </span>
                     <span className="px-3 py-1 rounded-full bg-indigo-100 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-400 text-xs font-semibold flex items-center gap-1">
-                        <Award size={12} /> Semester {mahasiswaData.semester}
+                        <Award size={12} /> Semester {formData.semester}
                     </span>
                     <span className="px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 text-xs font-semibold flex items-center gap-1">
-                        <BookOpen size={12} /> {mahasiswaData.ipk ? `IPK ${mahasiswaData.ipk}` : 'Belum ada IPK'}
+                        <BookOpen size={12} /> {formData.ipk ? `IPK ${formData.ipk}` : 'Belum ada IPK'}
                     </span>
                 </div>
 
@@ -415,7 +413,7 @@ export default function Profile() {
                             {isEditing ? (
                                 <input type="text" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none text-slate-800 dark:text-white transition-all" required />
                             ) : (
-                                <div className="px-4 py-2.5 bg-slate-50 dark:bg-slate-900 rounded-xl text-slate-800 dark:text-white">{user?.name}</div>
+                                <div className="px-4 py-2.5 bg-slate-50 dark:bg-slate-900 rounded-xl text-slate-800 dark:text-white">{formData.name}</div>
                             )}
                         </div>
 
@@ -427,7 +425,7 @@ export default function Profile() {
                             {isEditing ? (
                                 <input type="email" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none text-slate-800 dark:text-white transition-all" required />
                             ) : (
-                                <div className="px-4 py-2.5 bg-slate-50 dark:bg-slate-900 rounded-xl text-slate-800 dark:text-white">{user?.email}</div>
+                                <div className="px-4 py-2.5 bg-slate-50 dark:bg-slate-900 rounded-xl text-slate-800 dark:text-white">{formData.email}</div>
                             )}
                         </div>
 
@@ -439,7 +437,7 @@ export default function Profile() {
                             {isEditing ? (
                                 <input type="text" value={formData.nim} onChange={(e) => setFormData({...formData, nim: e.target.value})} className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none text-slate-800 dark:text-white transition-all" placeholder="Contoh: 3224005" />
                             ) : (
-                                <div className="px-4 py-2.5 bg-slate-50 dark:bg-slate-900 rounded-xl text-slate-800 dark:text-white">{mahasiswaData.nim || '-'}</div>
+                                <div className="px-4 py-2.5 bg-slate-50 dark:bg-slate-900 rounded-xl text-slate-800 dark:text-white">{formData.nim || '-'}</div>
                             )}
                         </div>
 
@@ -451,7 +449,7 @@ export default function Profile() {
                             {isEditing ? (
                                 <input type="text" value={formData.program_studi} onChange={(e) => setFormData({...formData, program_studi: e.target.value})} className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none text-slate-800 dark:text-white transition-all" placeholder="Contoh: Sistem Informasi" />
                             ) : (
-                                <div className="px-4 py-2.5 bg-slate-50 dark:bg-slate-900 rounded-xl text-slate-800 dark:text-white">{mahasiswaData.program_studi || '-'}</div>
+                                <div className="px-4 py-2.5 bg-slate-50 dark:bg-slate-900 rounded-xl text-slate-800 dark:text-white">{formData.program_studi || '-'}</div>
                             )}
                         </div>
 
@@ -465,7 +463,7 @@ export default function Profile() {
                                     {[...Array(14).keys()].map(i => <option key={i+1} value={i+1}>{i+1}</option>)}
                                 </select>
                             ) : (
-                                <div className="px-4 py-2.5 bg-slate-50 dark:bg-slate-900 rounded-xl text-slate-800 dark:text-white">{mahasiswaData.semester}</div>
+                                <div className="px-4 py-2.5 bg-slate-50 dark:bg-slate-900 rounded-xl text-slate-800 dark:text-white">{formData.semester}</div>
                             )}
                         </div>
 
@@ -477,55 +475,36 @@ export default function Profile() {
                             {isEditing ? (
                                 <input type="number" step="0.01" min="0" max="4" value={formData.ipk} onChange={(e) => setFormData({...formData, ipk: parseFloat(e.target.value) || 0})} className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none text-slate-800 dark:text-white transition-all" placeholder="0.00" />
                             ) : (
-                                <div className="px-4 py-2.5 bg-slate-50 dark:bg-slate-900 rounded-xl text-slate-800 dark:text-white">{mahasiswaData.ipk || '-'}</div>
+                                <div className="px-4 py-2.5 bg-slate-50 dark:bg-slate-900 rounded-xl text-slate-800 dark:text-white">{formData.ipk || '-'}</div>
                             )}
                         </div>
 
                         {/* Bio */}
                         <div className="md:col-span-2">
-                            <label className="flex items-center gap-2 text-sm font-semibold text-slate-500 dark:text-slate-400 mb-1">
-                                Bio Singkat
-                            </label>
+                            <label className="flex items-center gap-2 text-sm font-semibold text-slate-500 dark:text-slate-400 mb-1">Bio Singkat</label>
                             {isEditing ? (
                                 <textarea rows="3" value={formData.bio} onChange={(e) => setFormData({...formData, bio: e.target.value})} className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none resize-none text-slate-800 dark:text-white transition-all" placeholder="Ceritakan sedikit tentang diri Anda..."></textarea>
                             ) : (
-                                <div className="px-4 py-2.5 bg-slate-50 dark:bg-slate-900 rounded-xl text-slate-800 dark:text-white italic">{mahasiswaData.bio || "Belum ada bio"}</div>
+                                <div className="px-4 py-2.5 bg-slate-50 dark:bg-slate-900 rounded-xl text-slate-800 dark:text-white italic">{formData.bio || "Belum ada bio"}</div>
                             )}
                         </div>
 
-                        {/* Social Links dengan Icon Modern */}
+                        {/* Social Links */}
                         <div className="md:col-span-2">
-                            <label className="block text-sm font-semibold text-slate-500 dark:text-slate-400 mb-3">
-                                Link Sosial Media / Website
-                            </label>
+                            <label className="block text-sm font-semibold text-slate-500 dark:text-slate-400 mb-3">Link Sosial Media / Website</label>
                             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
                                 {socialLinks.map((social) => {
                                     const Icon = social.icon;
                                     return (
-                                        <div 
-                                            key={social.state} 
-                                            className={`flex items-center gap-3 p-3 rounded-xl ${social.bg} border border-transparent hover:border-slate-200 dark:hover:border-slate-600 transition-all`}
-                                        >
+                                        <div key={social.state} className={`flex items-center gap-3 p-3 rounded-xl ${social.bg} border border-transparent hover:border-slate-200 dark:hover:border-slate-600 transition-all`}>
                                             <Icon size={20} className={`shrink-0 ${social.color}`} />
                                             {isEditing ? (
-                                                <input 
-                                                    type="url" 
-                                                    value={formData[social.state]} 
-                                                    onChange={(e) => setFormData({...formData, [social.state]: e.target.value})} 
-                                                    className="flex-1 px-2 py-1 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 focus:ring-2 focus:ring-indigo-500 outline-none text-sm text-slate-800 dark:text-white transition-all" 
-                                                    placeholder={social.label} 
-                                                />
+                                                <input type="url" value={formData[social.state]} onChange={(e) => setFormData({...formData, [social.state]: e.target.value})} className="flex-1 px-2 py-1 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 focus:ring-2 focus:ring-indigo-500 outline-none text-sm text-slate-800 dark:text-white" placeholder={social.label} />
                                             ) : (
                                                 <div className="flex-1 text-sm">
-                                                    {mahasiswaData[social.state] ? (
-                                                        <a 
-                                                            href={mahasiswaData[social.state]} 
-                                                            target="_blank" 
-                                                            rel="noopener noreferrer" 
-                                                            className="text-indigo-600 dark:text-indigo-400 hover:underline font-medium flex items-center gap-1"
-                                                        >
-                                                            {social.label}
-                                                            <ExternalLink size={12} />
+                                                    {formData[social.state] ? (
+                                                        <a href={formData[social.state]} target="_blank" rel="noopener noreferrer" className="text-indigo-600 dark:text-indigo-400 hover:underline font-medium flex items-center gap-1">
+                                                            {social.label}<ExternalLink size={12} />
                                                         </a>
                                                     ) : (
                                                         <span className="text-slate-400 dark:text-slate-500">-</span>
@@ -541,28 +520,11 @@ export default function Profile() {
 
                     {isEditing && (
                         <div className="flex justify-end gap-3 mt-6 pt-4 border-t dark:border-slate-700">
-                            <button 
-                                type="button" 
-                                onClick={handleCancel} 
-                                className="px-5 py-2.5 rounded-xl bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-600 transition-all flex items-center gap-2 font-medium"
-                            >
+                            <button type="button" onClick={handleCancel} className="px-5 py-2.5 rounded-xl bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-600 transition-all flex items-center gap-2 font-medium">
                                 <X size={18} /> Batal
                             </button>
-                            <button 
-                                type="submit" 
-                                disabled={loading} 
-                                className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold shadow-md hover:shadow-lg transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                {loading ? (
-                                    <>
-                                        <Loader2 size={18} className="animate-spin" />
-                                        Menyimpan...
-                                    </>
-                                ) : (
-                                    <>
-                                        <Save size={18} /> Simpan Perubahan
-                                    </>
-                                )}
+                            <button type="submit" disabled={loading} className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold shadow-md hover:shadow-lg transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                                {loading ? <><Loader2 size={18} className="animate-spin" /> Menyimpan...</> : <><Save size={18} /> Simpan Perubahan</>}
                             </button>
                         </div>
                     )}
@@ -573,53 +535,23 @@ export default function Profile() {
             <div id="organization-section" className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 p-6">
                 <div className="flex items-center gap-2 mb-4">
                     <Building2 size={22} className="text-indigo-500" />
-                    <h3 className="text-lg font-bold text-slate-800 dark:text-white">
-                        Organization Links
-                    </h3>
+                    <h3 className="text-lg font-bold text-slate-800 dark:text-white">Organization Links</h3>
                 </div>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-                    Kelola link organisasi atau kampus/sekolah Anda. Link ini akan muncul di sidebar.
-                </p>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">Kelola link organisasi atau kampus/sekolah Anda. Link ini akan muncul di sidebar.</p>
 
                 <div className="space-y-2 mb-4">
                     {orgLinks.length === 0 ? (
                         <div className="text-center py-8 bg-slate-50 dark:bg-slate-900 rounded-xl">
                             <Building2 size={32} className="mx-auto text-slate-300 dark:text-slate-600 mb-2" />
-                            <p className="text-sm text-slate-500 dark:text-slate-400">
-                                Belum ada link. Silakan tambahkan link organisasi Anda.
-                            </p>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">Belum ada link. Silakan tambahkan link organisasi Anda.</p>
                         </div>
                     ) : (
                         orgLinks.map(link => (
                             <div key={link.id} className="flex items-center gap-2 p-3 bg-slate-50 dark:bg-slate-900 rounded-xl hover:shadow-sm transition-all group">
                                 <ExternalLink size={16} className="text-slate-400 shrink-0" />
-                                <input
-                                    type="text"
-                                    defaultValue={link.name}
-                                    onBlur={(e) => {
-                                        if (e.target.value !== link.name) {
-                                            updateOrgLink(link.id, { name: e.target.value, url: link.url });
-                                        }
-                                    }}
-                                    className="flex-1 bg-transparent border-none outline-none text-sm text-slate-700 dark:text-slate-300 px-2 py-1 rounded focus:bg-white dark:focus:bg-slate-800 transition-all"
-                                    placeholder="Nama"
-                                />
-                                <input
-                                    type="url"
-                                    defaultValue={link.url}
-                                    onBlur={(e) => {
-                                        if (e.target.value !== link.url) {
-                                            updateOrgLink(link.id, { name: link.name, url: e.target.value });
-                                        }
-                                    }}
-                                    className="flex-1 bg-transparent border-none outline-none text-sm text-slate-700 dark:text-slate-300 px-2 py-1 rounded focus:bg-white dark:focus:bg-slate-800 transition-all"
-                                    placeholder="URL"
-                                />
-                                <button
-                                    onClick={() => deleteOrgLink(link.id)}
-                                    className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-all opacity-0 group-hover:opacity-100"
-                                    title="Hapus"
-                                >
+                                <input type="text" defaultValue={link.name} onBlur={(e) => { if (e.target.value !== link.name) { updateOrgLink(link.id, { name: e.target.value, url: link.url }); } }} className="flex-1 bg-transparent border-none outline-none text-sm text-slate-700 dark:text-slate-300 px-2 py-1 rounded focus:bg-white dark:focus:bg-slate-800 transition-all" placeholder="Nama" />
+                                <input type="url" defaultValue={link.url} onBlur={(e) => { if (e.target.value !== link.url) { updateOrgLink(link.id, { name: link.name, url: e.target.value }); } }} className="flex-1 bg-transparent border-none outline-none text-sm text-slate-700 dark:text-slate-300 px-2 py-1 rounded focus:bg-white dark:focus:bg-slate-800 transition-all" placeholder="URL" />
+                                <button onClick={() => deleteOrgLink(link.id)} className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-all opacity-0 group-hover:opacity-100" title="Hapus">
                                     <Trash2 size={16} />
                                 </button>
                             </div>
@@ -628,40 +560,15 @@ export default function Profile() {
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-2">
-                    <input
-                        type="text"
-                        value={newLink.name}
-                        onChange={(e) => setNewLink({ ...newLink, name: e.target.value })}
-                        placeholder="Nama (contoh: STMIK Bandung)"
-                        className="flex-1 px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 outline-none text-sm focus:ring-2 focus:ring-indigo-500 text-slate-800 dark:text-white transition-all"
-                    />
-                    <input
-                        type="url"
-                        value={newLink.url}
-                        onChange={(e) => setNewLink({ ...newLink, url: e.target.value })}
-                        placeholder="URL (contoh: https://kampus.ac.id)"
-                        className="flex-1 px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 outline-none text-sm focus:ring-2 focus:ring-indigo-500 text-slate-800 dark:text-white transition-all"
-                    />
-                    <button
-                        onClick={addOrgLink}
-                        disabled={addingLink}
-                        className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white rounded-xl text-sm font-medium flex items-center gap-2 transition-all hover:shadow-md disabled:cursor-not-allowed"
-                    >
-                        {addingLink ? (
-                            <>
-                                <Loader2 size={16} className="animate-spin" />
-                                Menyimpan...
-                            </>
-                        ) : (
-                            <>
-                                <Plus size={16} /> Tambah
-                            </>
-                        )}
+                    <input type="text" value={newLink.name} onChange={(e) => setNewLink({ ...newLink, name: e.target.value })} placeholder="Nama (contoh: STMIK Bandung)" className="flex-1 px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 outline-none text-sm focus:ring-2 focus:ring-indigo-500 text-slate-800 dark:text-white transition-all" />
+                    <input type="url" value={newLink.url} onChange={(e) => setNewLink({ ...newLink, url: e.target.value })} placeholder="URL (contoh: https://kampus.ac.id)" className="flex-1 px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 outline-none text-sm focus:ring-2 focus:ring-indigo-500 text-slate-800 dark:text-white transition-all" />
+                    <button onClick={addOrgLink} disabled={addingLink} className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white rounded-xl text-sm font-medium flex items-center gap-2 transition-all hover:shadow-md disabled:cursor-not-allowed">
+                        {addingLink ? <><Loader2 size={16} className="animate-spin" /> Menyimpan...</> : <><Plus size={16} /> Tambah</>}
                     </button>
                 </div>
             </div>
 
-            {/* Statistik Tugas */}
+            {/* Statistik */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="bg-white dark:bg-slate-800 rounded-xl p-5 shadow-sm border border-slate-100 dark:border-slate-700 text-center hover:shadow-md transition-all cursor-pointer">
                     <div className="text-3xl font-bold text-indigo-600">{taskStats.total}</div>
