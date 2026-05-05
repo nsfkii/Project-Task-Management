@@ -66,20 +66,20 @@ export default function HomePage() {
                                 alt="StudentTask Logo"
                                 className="h-7 sm:h-8 md:h-9 w-auto object-contain hidden dark:block"
                             />
-                            <span className="text-base sm:text-lg md:text-xl font-bold text-indigo-600 dark:text-indigo-400">
+                            <span className="text-base sm:text-lg md:text-xl font-bold text-blue-600 dark:text-indigo-400">
                                 StudentTask
                             </span>
                         </Link>
 
                         {/* Navigasi + Actions */}
                         <div className="flex items-center gap-2 sm:gap-3 md:gap-4">
-                            <Link to="/" className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-indigo-600 transition hidden sm:inline-block">
+                            <Link to="/" className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-blue-600 transition hidden sm:inline-block">
                                 Beranda
                             </Link>
-                            <Link to="/dashboard" className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-indigo-600 transition hidden sm:inline-block">
+                            <Link to="/dashboard" className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-blue-600 transition hidden sm:inline-block">
                                 Dashboard
                             </Link>
-                            <Link to="/profile" className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-indigo-600 transition hidden sm:inline-block">
+                            <Link to="/profile" className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-blue-600 transition hidden sm:inline-block">
                                 Profil
                             </Link>
                             
@@ -211,7 +211,7 @@ export default function HomePage() {
                     
                     {loading ? (
                         <div className="text-center py-8 sm:py-12">
-                            <div className="inline-block animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-indigo-600"></div>
+                            <div className="inline-block animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-blue-600"></div>
                             <p className="mt-2 sm:mt-3 text-sm sm:text-base text-slate-500 dark:text-slate-400">Memuat...</p>
                         </div>
                     ) : (
@@ -275,8 +275,8 @@ export default function HomePage() {
                         <span className="text-lg sm:text-xl font-bold text-indigo-600 dark:text-indigo-400">StudentTask</span>
                     </Link>
                     <div className="flex items-center gap-2 sm:gap-4">
-                        <Link to="/login" className="px-3 sm:px-4 py-1.5 sm:py-2 text-sm sm:text-base text-slate-600 dark:text-slate-300 hover:text-indigo-600 transition">Login</Link>
-                        <Link to="/register" className="px-3 sm:px-4 py-1.5 sm:py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition text-sm sm:text-base">Daftar</Link>
+                        <Link to="/login" className="px-3 sm:px-4 py-1.5 sm:py-2 text-sm sm:text-base text-slate-600 dark:text-slate-300 hover:text-blue-600 transition">Login</Link>
+                        <Link to="/register" className="px-3 sm:px-4 py-1.5 sm:py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition text-sm sm:text-base">Daftar</Link>
                         <button onClick={toggleTheme} className="p-2 sm:p-2.5 rounded-full bg-white dark:bg-slate-800 shadow-sm hover:shadow-md border border-slate-100 dark:border-slate-700 text-slate-500 dark:text-slate-300 transition-all">
                             {theme === 'light' ? <Moon size={16} className="sm:w-5 sm:h-5" /> : <Sun size={16} className="sm:w-5 sm:h-5" />}
                         </button>
@@ -289,16 +289,16 @@ export default function HomePage() {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16 md:py-24 text-center">
                     <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-slate-800 dark:text-white mb-4 sm:mb-6 leading-tight">
                         Kelola Tugas Kuliah Anda<br />
-                        <span className="text-indigo-600">Menjadi Lebih Mudah & Terstruktur</span>
+                        <span className="text-blue-600">Menjadi Lebih Mudah & Terstruktur</span>
                     </h1>
                     <p className="text-base sm:text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto mb-6 sm:mb-8 px-2">
                         StudentTask membantu mahasiswa/pelajar mencatat deadline, memantau progress, dan tetap produktif sepanjang semester.
                     </p>
                     <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center">
-                        <Link to="/register" className="w-full sm:w-auto px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold flex items-center justify-center gap-2 shadow-lg text-sm sm:text-base">
+                        <Link to="/register" className="w-full sm:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold flex items-center justify-center gap-2 shadow-lg text-sm sm:text-base">
                             <Plus size={18} /> Mulai Sekarang
                         </Link>
-                        <a href="#fitur" className="w-full sm:w-auto px-6 py-3 border border-slate-300 dark:border-slate-600 rounded-xl text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition text-sm sm:text-base text-center">
+                        <a href="#fitur" className="w-full sm:w-auto px-6 py-3 border border-blue-300 dark:border-blue-600 rounded-xl text-blue-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition text-sm sm:text-base text-center">
                             Lihat Fitur
                         </a>
                     </div>
@@ -311,17 +311,17 @@ export default function HomePage() {
                     <h2 className="text-2xl sm:text-3xl font-bold text-center text-slate-800 dark:text-white mb-8 sm:mb-12">Fitur Unggulan</h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
                         <div className="p-5 sm:p-6 rounded-2xl bg-slate-50 dark:bg-slate-700/50 text-center hover:-translate-y-1 transition-transform">
-                            <CheckCircle className="h-10 w-10 sm:h-12 sm:w-12 text-indigo-600 mx-auto mb-3 sm:mb-4" />
+                            <CheckCircle className="h-10 w-10 sm:h-12 sm:w-12 text-blue-600 mx-auto mb-3 sm:mb-4" />
                             <h3 className="text-lg sm:text-xl font-semibold mb-2 text-slate-800 dark:text-white">Manajemen Tugas</h3>
                             <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300">Catat semua tugas, deadline, dan prioritas.</p>
                         </div>
                         <div className="p-5 sm:p-6 rounded-2xl bg-slate-50 dark:bg-slate-700/50 text-center hover:-translate-y-1 transition-transform">
-                            <Calendar className="h-10 w-10 sm:h-12 sm:w-12 text-indigo-600 mx-auto mb-3 sm:mb-4" />
+                            <Calendar className="h-10 w-10 sm:h-12 sm:w-12 text-blue-600 mx-auto mb-3 sm:mb-4" />
                             <h3 className="text-lg sm:text-xl font-semibold mb-2 text-slate-800 dark:text-white">Kalender Deadline</h3>
                             <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300">Lihat jadwal tugas dalam tampilan kalender.</p>
                         </div>
                         <div className="p-5 sm:p-6 rounded-2xl bg-slate-50 dark:bg-slate-700/50 text-center hover:-translate-y-1 transition-transform">
-                            <Clock className="h-10 w-10 sm:h-12 sm:w-12 text-indigo-600 mx-auto mb-3 sm:mb-4" />
+                            <Clock className="h-10 w-10 sm:h-12 sm:w-12 text-blue-600 mx-auto mb-3 sm:mb-4" />
                             <h3 className="text-lg sm:text-xl font-semibold mb-2 text-slate-800 dark:text-white">Pengingat</h3>
                             <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300">Dapatkan notifikasi tugas mendekati deadline.</p>
                         </div>
@@ -336,7 +336,7 @@ export default function HomePage() {
                     <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 mb-6 sm:mb-8 max-w-xl mx-auto">
                         Bergabunglah dengan ribuan mahasiswa & pelajar yang sudah menggunakan StudentTask.
                     </p>
-                    <Link to="/register" className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold shadow-lg text-sm sm:text-base">
+                    <Link to="/register" className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold shadow-lg text-sm sm:text-base">
                         <ArrowRight size={18} /> Daftar Sekarang
                     </Link>
                 </div>

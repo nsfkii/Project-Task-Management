@@ -125,11 +125,11 @@ export default function Topbar({ onToggleSidebar }) {
                         alt="StudentTask Logo"
                         className="h-8 sm:h-10 w-auto object-contain hidden dark:block"
                     />
-                    <h1 className="text-xl sm:text-2xl font-bold text-indigo-600 dark:text-indigo-400">StudentTask</h1>
+                    <h1 className="text-xl sm:text-2xl font-bold text-blue-600 dark:text-blue-400">StudentTask</h1>
                 </Link>
                 <div className="flex items-center gap-2 sm:gap-4">
-                    <Link to="/login" className="px-3 py-1.5 sm:px-4 sm:py-2 text-indigo-600 hover:bg-indigo-50 dark:text-indigo-400 rounded-lg transition text-sm sm:text-base">Login</Link>
-                    <Link to="/register" className="px-3 py-1.5 sm:px-4 sm:py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition text-sm sm:text-base">Daftar</Link>
+                    <Link to="/login" className="px-3 py-1.5 sm:px-4 sm:py-2 text-blue-600 hover:bg-indigo-50 dark:text-blue-400 rounded-lg transition text-sm sm:text-base">Login</Link>
+                    <Link to="/register" className="px-3 py-1.5 sm:px-4 sm:py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition text-sm sm:text-base">Daftar</Link>
                     <button onClick={toggleTheme} className="p-2 rounded-full bg-white dark:bg-slate-800 shadow-sm hover:shadow-md border border-slate-100 dark:border-slate-700 text-slate-500 dark:text-slate-300 transition-all">
                         {theme === 'light' ? <Moon size={18} className="sm:w-5 sm:h-5" /> : <Sun size={18} className="sm:w-5 sm:h-5" />}
                     </button>
@@ -165,7 +165,7 @@ export default function Topbar({ onToggleSidebar }) {
                                 alt="StudentTask Logo"
                                 className="h-7 sm:h-8 md:h-9 w-auto object-contain hidden dark:block"
                             />
-                            <span className="text-lg sm:text-xl font-bold text-indigo-600 dark:text-indigo-400 hidden sm:inline-block">
+                            <span className="text-lg sm:text-xl font-bold text-blue-600 dark:text-blue-400 hidden sm:inline-block">
                                 StudentTask
                             </span>
                         </Link>
@@ -181,13 +181,13 @@ export default function Topbar({ onToggleSidebar }) {
 
                     {/* Bagian Kanan - Desktop */}
                     <div className="hidden md:flex items-center gap-3 lg:gap-4">
-                        <Link to="/" className="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-indigo-600 transition">
+                        <Link to="/" className="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-blue-600 transition">
                             Beranda
                         </Link>
-                        <Link to="/calendar" className="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-indigo-600 transition">
+                        <Link to="/calendar" className="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-blue-600 transition">
                             Calendar
                         </Link>
-                        <Link to="/profile" className="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-indigo-600 transition">
+                        <Link to="/profile" className="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-blue-600 transition">
                             Profil
                         </Link>
                         

@@ -47,7 +47,7 @@ export default function Footer() {
                                         className="w-full h-full object-cover hidden dark:block"
                                     />
                                 </div>
-                                <h3 className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                                <h3 className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-blue-600 bg-clip-text text-transparent">
                                     StudentTask
                                 </h3>
                             </div>
@@ -63,31 +63,31 @@ export default function Footer() {
                         {/* Quick Links */}
                         <div>
                             <h4 className="font-bold text-slate-800 dark:text-slate-200 mb-4 text-sm uppercase tracking-wider flex items-center gap-2">
-                                <Rocket size={16} className="text-indigo-500" />
+                                <Rocket size={16} className="text-blue-500" />
                                 Tautan Cepat
                             </h4>
                             <ul className="space-y-2">
                                 <li>
-                                    <a href="/dashboard" className="text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 transition-all duration-300 text-sm flex items-center gap-2 group">
+                                    <a href="/dashboard" className="text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 transition-all duration-300 text-sm flex items-center gap-2 group">
                                         <span className="w-1 h-1 bg-indigo-400 rounded-full opacity-0 group-hover:opacity-100 transition-all"></span>
                                         Dashboard
                                     </a>
                                 </li>
                                 <li>
-                                    <a href="/calendar" className="text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 transition-all duration-300 text-sm flex items-center gap-2 group">
+                                    <a href="/calendar" className="text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 transition-all duration-300 text-sm flex items-center gap-2 group">
                                         <span className="w-1 h-1 bg-indigo-400 rounded-full opacity-0 group-hover:opacity-100 transition-all"></span>
                                         Kalender
                                     </a>
                                 </li>
                                 <li>
-                                    <a href="/profile" className="text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 transition-all duration-300 text-sm flex items-center gap-2 group">
+                                    <a href="/profile" className="text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 transition-all duration-300 text-sm flex items-center gap-2 group">
                                         <span className="w-1 h-1 bg-indigo-400 rounded-full opacity-0 group-hover:opacity-100 transition-all"></span>
                                         Profil
                                     </a>
                                 </li>
                                 <li>
-                                    <a href="/login" className="text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 transition-all duration-300 text-sm flex items-center gap-2 group">
-                                        <span className="w-1 h-1 bg-indigo-400 rounded-full opacity-0 group-hover:opacity-100 transition-all"></span>
+                                    <a href="/login" className="text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 transition-all duration-300 text-sm flex items-center gap-2 group">
+                                        <span className="w-1 h-1 bg-blue-400 rounded-full opacity-0 group-hover:opacity-100 transition-all"></span>
                                         Login
                                     </a>
                                 </li>
@@ -146,7 +146,7 @@ export default function Footer() {
                                     href="https://github.com/nsfkii" 
                                     target="_blank" 
                                     rel="noopener noreferrer" 
-                                    className="h-10 w-10 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-indigo-500 hover:text-white dark:hover:bg-indigo-600 transition-all duration-300 hover:scale-110 hover:rotate-6"
+                                    className="h-10 w-10 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-blue-500 hover:text-white dark:hover:bg-blue-600 transition-all duration-300 hover:scale-110 hover:rotate-6"
                                 >
                                     <Github size={20} />
                                 </a>
@@ -177,8 +177,7 @@ export default function Footer() {
                             {/* Stats / Fun Fact */}
                             <div className="bg-indigo-50 dark:bg-indigo-950/30 rounded-xl p-3 text-center">
                                 <p className="text-xs text-slate-600 dark:text-slate-300">
-                                     Siap membantu pelajar untuk <br />
-                                    mengelola tugas dengan lebih baik
+                                     Akses dan kelola tugas anda dengan lebih baik
                                 </p>
                             </div>
                         </div>
@@ -211,7 +210,7 @@ export default function Footer() {
             {/* Scroll to Top Button */}
             <button
                 onClick={scrollToTop}
-                className={`fixed bottom-6 right-6 z-50 p-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full shadow-lg transition-all duration-300 hover:scale-110 ${
+                className={`fixed bottom-6 right-6 z-50 p-3 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg transition-all duration-300 hover:scale-110 ${
                     showScrollTop ? 'opacity-100 visible' : 'opacity-0 invisible'
                 }`}
                 aria-label="Scroll to top"

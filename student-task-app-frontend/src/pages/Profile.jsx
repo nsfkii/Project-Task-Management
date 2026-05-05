@@ -357,7 +357,7 @@ export default function Profile() {
                                 <button
                                     type="button"
                                     onClick={() => fileInputRef.current.click()}
-                                    className="absolute bottom-0 right-0 p-1.5 bg-indigo-600 text-white rounded-full shadow-md hover:scale-110 transition-transform"
+                                    className="absolute bottom-0 right-0 p-1.5 bg-blue-600 text-white rounded-full shadow-md hover:scale-110 transition-transform"
                                 >
                                     <Camera size={14} />
                                 </button>
@@ -444,7 +444,7 @@ export default function Profile() {
                         {/* Program Studi */}
                         <div>
                             <label className="flex items-center gap-2 text-sm font-semibold text-slate-500 dark:text-slate-400 mb-1">
-                                <BookOpen size={16} /> Program Studi
+                                <BookOpen size={16} /> Jurusan / Program Studi
                             </label>
                             {isEditing ? (
                                 <input type="text" value={formData.program_studi} onChange={(e) => setFormData({...formData, program_studi: e.target.value})} className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none text-slate-800 dark:text-white transition-all" placeholder="Contoh: Sistem Informasi" />
@@ -523,7 +523,7 @@ export default function Profile() {
                             <button type="button" onClick={handleCancel} className="px-5 py-2.5 rounded-xl bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-600 transition-all flex items-center gap-2 font-medium">
                                 <X size={18} /> Batal
                             </button>
-                            <button type="submit" disabled={loading} className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold shadow-md hover:shadow-lg transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                            <button type="submit" disabled={loading} className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-md hover:shadow-lg transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
                                 {loading ? <><Loader2 size={18} className="animate-spin" /> Menyimpan...</> : <><Save size={18} /> Simpan Perubahan</>}
                             </button>
                         </div>
@@ -534,7 +534,7 @@ export default function Profile() {
             {/* Organization Links */}
             <div id="organization-section" className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 p-6">
                 <div className="flex items-center gap-2 mb-4">
-                    <Building2 size={22} className="text-indigo-500" />
+                    <Building2 size={22} className="text-blue-500" />
                     <h3 className="text-lg font-bold text-slate-800 dark:text-white">Organization Links</h3>
                 </div>
                 <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">Kelola link organisasi atau kampus/sekolah Anda. Link ini akan muncul di sidebar.</p>
@@ -562,7 +562,7 @@ export default function Profile() {
                 <div className="flex flex-col sm:flex-row gap-2">
                     <input type="text" value={newLink.name} onChange={(e) => setNewLink({ ...newLink, name: e.target.value })} placeholder="Nama (contoh: STMIK Bandung)" className="flex-1 px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 outline-none text-sm focus:ring-2 focus:ring-indigo-500 text-slate-800 dark:text-white transition-all" />
                     <input type="url" value={newLink.url} onChange={(e) => setNewLink({ ...newLink, url: e.target.value })} placeholder="URL (contoh: https://kampus.ac.id)" className="flex-1 px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 outline-none text-sm focus:ring-2 focus:ring-indigo-500 text-slate-800 dark:text-white transition-all" />
-                    <button onClick={addOrgLink} disabled={addingLink} className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white rounded-xl text-sm font-medium flex items-center gap-2 transition-all hover:shadow-md disabled:cursor-not-allowed">
+                    <button onClick={addOrgLink} disabled={addingLink} className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-xl text-sm font-medium flex items-center gap-2 transition-all hover:shadow-md disabled:cursor-not-allowed">
                         {addingLink ? <><Loader2 size={16} className="animate-spin" /> Menyimpan...</> : <><Plus size={16} /> Tambah</>}
                     </button>
                 </div>
@@ -571,7 +571,7 @@ export default function Profile() {
             {/* Statistik */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="bg-white dark:bg-slate-800 rounded-xl p-5 shadow-sm border border-slate-100 dark:border-slate-700 text-center hover:shadow-md transition-all cursor-pointer">
-                    <div className="text-3xl font-bold text-indigo-600">{taskStats.total}</div>
+                    <div className="text-3xl font-bold text-blue-600">{taskStats.total}</div>
                     <div className="text-sm text-slate-500 mt-1">Total Tugas</div>
                 </div>
                 <div className="bg-white dark:bg-slate-800 rounded-xl p-5 shadow-sm border border-slate-100 dark:border-slate-700 text-center hover:shadow-md transition-all cursor-pointer">

@@ -656,7 +656,7 @@ export default function Dashboard() {
                     </select>
                     <button 
                         onClick={() => openModal()} 
-                        className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-medium transition-all shadow-md hover:shadow-lg text-sm"
+                        className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-all shadow-md hover:shadow-lg text-sm"
                     >
                         <Plus size={18} /> Tambah
                     </button>
@@ -750,9 +750,9 @@ export default function Dashboard() {
                                                     : 'bg-slate-100 text-slate-600 border-slate-300 dark:bg-slate-700 dark:text-slate-300 dark:border-slate-600'
                                             }`}
                                         >
-                                            <option value="pending">⏳ Pending</option>
-                                            <option value="progress">🔄 Progress</option>
-                                            <option value="done">✅ Selesai</option>
+                                            <option value="pending">Pending</option>
+                                            <option value="progress">Progress</option>
+                                            <option value="done">Selesai</option>
                                         </select>
                                     </div>
 
@@ -889,7 +889,7 @@ export default function Dashboard() {
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Deskripsi (Opsional)</label>
+                                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Catatan (Opsional)</label>
                                 <textarea rows="3" value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} className="w-full px-4 py-2 rounded-lg bg-slate-50 dark:bg-slate-900 border focus:ring-2 focus:ring-indigo-500 outline-none resize-none text-sm" placeholder="Detail tugas..."></textarea>
                             </div>
                             <div className="flex justify-end gap-3 pt-4 border-t dark:border-slate-700">
@@ -897,7 +897,7 @@ export default function Dashboard() {
                                 <button 
                                     type="submit" 
                                     disabled={isSubmitting}
-                                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-sm"
+                                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-sm"
                                 >
                                     {isSubmitting ? (
                                         <>
