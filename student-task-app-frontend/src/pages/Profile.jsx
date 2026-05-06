@@ -4,13 +4,14 @@ import { AuthContext } from '../context/AuthContext';
 import { 
     User, Mail, GraduationCap, Edit2, Save, X, Camera, BookOpen, 
     Calendar, Award, Plus, Trash2, ExternalLink, Building2,
-    Globe, Github, Linkedin, Instagram, Loader2
+    Globe, Github, Linkedin, Instagram, Loader2, Palette
 } from 'lucide-react';
 import Swal from 'sweetalert2';
 import api from '../api/axios';
+import { buildAvatarUrl, parseTasksPayload, parseUserPayload, toArray } from '../utils/apiResponse';
 
 export default function Profile() {
-    const { user, userProfile, updateUserProfile, setUser } = useContext(AuthContext);
+    const { user, userProfile, updateUserProfile, setUser, colorTheme, setColorTheme } = useContext(AuthContext);
     const [isEditing, setIsEditing] = useState(false);
     const [loading, setLoading] = useState(false);
     const [taskStats, setTaskStats] = useState({ total: 0, done: 0, progress: 0, pending: 0 });
@@ -43,7 +44,7 @@ export default function Profile() {
     const fetchUserData = useCallback(async () => {
         try {
             const response = await api.get('/user');
-            const userData = response.data;
+            const userData = parseUserPayload(response.data);
             setFormData({
                 name: userData.name || '',
                 email: userData.email || '',
@@ -57,7 +58,7 @@ export default function Profile() {
                 website: userData.website || '',
                 instagram: userData.instagram || ''
             });
-            setPreviewUrl(userData.avatar ? `${import.meta.env.VITE_STORAGE_URL || 'http://127.0.0.1:8000/storage'}/${userData.avatar}` : null);
+            setPreviewUrl(buildAvatarUrl(userData?.avatar));
             updateUserProfile(userData);
         } catch (error) {
             console.error("Gagal mengambil data user:", error);
@@ -80,7 +81,7 @@ export default function Profile() {
                 website: userProfile.website || '',
                 instagram: userProfile.instagram || ''
             });
-            setPreviewUrl(userProfile.avatar ? `${import.meta.env.VITE_STORAGE_URL || 'http://127.0.0.1:8000/storage'}/${userProfile.avatar}` : null);
+            setPreviewUrl(buildAvatarUrl(userProfile.avatar));
         } else {
             fetchUserData();
         }
@@ -100,19 +101,29 @@ export default function Profile() {
         fetchOrgLinks();
     }, [fetchOrgLinks]);
 
-    // Fetch task stats
+    // FIX PENTING: Fetch task stats dengan safety handler
     const fetchTaskStats = useCallback(async () => {
         try {
             const response = await api.get('/tasks?all=true');
-            const tasks = response.data;
+            const { tasks } = parseTasksPayload(response.data);
+            const safeTasks = toArray(tasks);
+            
+            // Validasi array
+            if (!Array.isArray(safeTasks)) {
+                console.error("Tasks bukan array:", safeTasks);
+                setTaskStats({ total: 0, done: 0, progress: 0, pending: 0 });
+                return;
+            }
+            
             setTaskStats({
-                total: tasks.length,
-                done: tasks.filter(t => t.status === 'done').length,
-                progress: tasks.filter(t => t.status === 'progress').length,
-                pending: tasks.filter(t => t.status === 'pending').length
+                total: safeTasks.length,
+                done: safeTasks.filter(t => t.status === 'done').length,
+                progress: safeTasks.filter(t => t.status === 'progress').length,
+                pending: safeTasks.filter(t => t.status === 'pending').length
             });
         } catch (error) {
-            console.error("Gagal mengambil statistik tugas", error);
+            console.error("Gagal mengambil statistik tugas:", error);
+            setTaskStats({ total: 0, done: 0, progress: 0, pending: 0 });
         }
     }, []);
 
@@ -164,12 +175,10 @@ export default function Profile() {
         if (avatarFile) data.append('avatar', avatarFile);
         
         try {
-            const response = await api.post('/profile', data, {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            });
-            
-            updateUserProfile(response.data.user);
-            setUser(response.data.user);
+            const response = await api.post('/profile', data);
+            const updatedUser = parseUserPayload(response.data);
+            updateUserProfile(updatedUser);
+            setUser(updatedUser);
             
             setIsEditing(false);
             setAvatarFile(null);
@@ -211,7 +220,7 @@ export default function Profile() {
                 website: userProfile.website || '',
                 instagram: userProfile.instagram || ''
             });
-            setPreviewUrl(userProfile.avatar ? `${import.meta.env.VITE_STORAGE_URL || 'http://127.0.0.1:8000/storage'}/${userProfile.avatar}` : null);
+            setPreviewUrl(buildAvatarUrl(userProfile.avatar));
         }
     };
 
@@ -336,6 +345,12 @@ export default function Profile() {
         { icon: Linkedin, label: 'LinkedIn', state: 'linkedin', color: 'text-blue-700', bg: 'bg-blue-50 dark:bg-blue-500/10' },
         { icon: Github, label: 'GitHub', state: 'github', color: 'text-gray-700 dark:text-gray-300', bg: 'bg-gray-50 dark:bg-gray-500/10' },
         { icon: Instagram, label: 'Instagram', state: 'instagram', color: 'text-pink-500', bg: 'bg-pink-50 dark:bg-pink-500/10' }
+    ];
+
+    const themeOptions = [
+        { id: 'calm', name: 'Calm', desc: 'Lembut & fokus belajar', swatch: 'from-[#5f8f87] to-[#43615d]' },
+        { id: 'forest', name: 'Forest', desc: 'Natural & menenangkan', swatch: 'from-[#4d8b68] to-[#365f48]' },
+        { id: 'midnight', name: 'Midnight', desc: 'Dingin & profesional', swatch: 'from-[#5d728f] to-[#3d4d62]' },
     ];
 
     return (
@@ -529,6 +544,35 @@ export default function Profile() {
                         </div>
                     )}
                 </form>
+            </div>
+
+            {/* Personalisasi Tema */}
+            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 p-6">
+                <div className="flex items-center gap-2 mb-4">
+                    <Palette size={20} className="text-indigo-600" />
+                    <h3 className="text-lg font-bold text-slate-800 dark:text-white">Tema StudentTask</h3>
+                </div>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+                    Pilih warna favorit agar pengalaman belajar terasa lebih nyaman.
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    {themeOptions.map((option) => (
+                        <button
+                            key={option.id}
+                            type="button"
+                            onClick={() => setColorTheme(option.id)}
+                            className={`text-left p-3 rounded-xl border transition-all ${
+                                colorTheme === option.id
+                                    ? 'border-indigo-400 bg-indigo-50 dark:bg-indigo-500/10'
+                                    : 'border-slate-200 dark:border-slate-700 hover:border-indigo-300'
+                            }`}
+                        >
+                            <div className={`h-9 rounded-lg bg-gradient-to-r ${option.swatch} mb-2`} />
+                            <p className="font-semibold text-slate-800 dark:text-white">{option.name}</p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">{option.desc}</p>
+                        </button>
+                    ))}
+                </div>
             </div>
 
             {/* Organization Links */}

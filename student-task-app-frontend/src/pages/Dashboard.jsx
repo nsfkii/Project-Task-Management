@@ -7,6 +7,7 @@ import {
 import Swal from 'sweetalert2';
 import { Link } from 'react-router-dom';
 import api from '../api/axios';
+import { parseTasksPayload, toArray } from '../utils/apiResponse';
 
 export default function Dashboard() {
     const [tasks, setTasks] = useState([]);
@@ -71,13 +72,16 @@ export default function Dashboard() {
             if (filterPriority) url += `priority=${filterPriority}&`;
 
             const response = await api.get(url);
-            const cleanTasks = response.data.tasks.data.map(task => ({
+            const { tasks, stats } = parseTasksPayload(response.data);
+            const list = toArray(tasks);
+            const cleanTasks = list.map(task => ({
                 ...task,
                 source_url: (task.source_url && task.source_url !== 'nullable|string') ? task.source_url : null
             }));
-            setStats(response.data.stats);
+            setStats(stats);
             setTasks(cleanTasks);
-            setPaginationData({ ...response.data.tasks, data: cleanTasks });
+            const paginationSource = response.data?.data?.tasks ?? response.data?.tasks ?? {};
+            setPaginationData({ ...paginationSource, data: cleanTasks });
         } catch (error) {
             console.error("Gagal mengambil data tugas", error);
         } finally {
@@ -622,7 +626,7 @@ export default function Dashboard() {
             </div>
 
             {/* SEARCH & FILTER */}
-            <div className="flex flex-col md:flex-row gap-3 justify-between items-center bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700">
+            <div className="flex flex-col md:flex-row gap-3 justify-between items-stretch md:items-center bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden">
                 <div className="flex-1 w-full relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                     <input 
@@ -633,11 +637,11 @@ export default function Dashboard() {
                         className="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none dark:text-white text-sm transition-all"
                     />
                 </div>
-                <div className="flex gap-2 w-full md:w-auto">
+                <div className="grid grid-cols-1 xs:grid-cols-2 md:flex gap-2 w-full md:w-auto">
                     <select 
                         value={filterStatus} 
                         onChange={(e) => setFilterStatus(e.target.value)} 
-                        className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white text-sm"
+                        className="w-full min-w-0 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white text-sm"
                     >
                         <option value="">Semua Status</option>
                         <option value="pending">Pending</option>
@@ -647,7 +651,7 @@ export default function Dashboard() {
                     <select 
                         value={filterPriority} 
                         onChange={(e) => setFilterPriority(e.target.value)} 
-                        className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white text-sm"
+                        className="w-full min-w-0 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white text-sm"
                     >
                         <option value="">Semua Prioritas</option>
                         <option value="high">High</option>
@@ -656,7 +660,7 @@ export default function Dashboard() {
                     </select>
                     <button 
                         onClick={() => openModal()} 
-                        className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-all shadow-md hover:shadow-lg text-sm"
+                        className="w-full xs:col-span-2 md:w-auto md:col-auto flex items-center justify-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-all shadow-md hover:shadow-lg text-sm whitespace-nowrap"
                     >
                         <Plus size={18} /> Tambah
                     </button>

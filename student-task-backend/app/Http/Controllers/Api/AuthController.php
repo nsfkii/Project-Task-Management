@@ -7,6 +7,11 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
@@ -31,7 +36,9 @@ class AuthController extends Controller
         return response()->json([
             'message' => 'Register berhasil',
             'access_token' => $token,
-            'user' => $user
+            'data' => [
+                'user' => $user,
+            ],
         ], 201);
     }
 
@@ -53,10 +60,10 @@ class AuthController extends Controller
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
-            'message' => 'Login berhasil',
+            'message' => 'Register berhasil',
             'access_token' => $token,
-            'user' => $user
-        ]);
+            'user' => $user, 
+        ], 201);
     }
 
     // 3. UPDATE PROFILE (LENGKAP)
@@ -96,6 +103,9 @@ class AuthController extends Controller
 
         // Upload avatar if exists
         if ($request->hasFile('avatar')) {
+            if ($user->avatar) {
+                \Storage::disk('public')->delete($user->avatar);
+            }
             $avatarPath = $request->file('avatar')->store('avatars', 'public');
             $user->avatar = $avatarPath;
         }
@@ -104,14 +114,18 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'Profil berhasil diperbarui',
-            'user' => $user
+            'data' => [
+                'user' => $user,
+            ],
         ]);
     }
 
     // 4. GET USER (PROFILE)
     public function getUser(Request $request)
     {
-        return response()->json($request->user());
+        return response()->json([
+            'data' => $request->user(),
+        ]);
     }
 
     // 5. LOGOUT
@@ -122,6 +136,101 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'Logout berhasil'
+        ]);
+    }
+
+    public function forgotPassword(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+        ]);
+
+        $user = User::where('email', $request->email)->first();
+        if (!$user) {
+            return response()->json([
+                'message' => 'Jika email terdaftar, OTP sudah dikirim.',
+            ]);
+        }
+
+        $otp = (string) random_int(100000, 999999);
+
+        DB::table('password_reset_tokens')->updateOrInsert(
+            ['email' => $user->email],
+            [
+                'token' => Hash::make($otp),
+                'created_at' => now(),
+            ]
+        );
+
+        Mail::raw("Kode OTP reset password Anda: {$otp}. Berlaku 10 menit.", function ($message) use ($user) {
+            $message->to($user->email)->subject('OTP Reset Password StudentTask');
+        });
+
+        return response()->json([
+            'message' => 'Jika email terdaftar, OTP sudah dikirim.',
+        ]);
+    }
+
+    public function verifyOtp(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'otp' => 'required|digits:6',
+        ]);
+
+        $record = DB::table('password_reset_tokens')->where('email', $request->email)->first();
+        if (!$record) {
+            throw ValidationException::withMessages(['otp' => 'OTP tidak valid.']);
+        }
+
+        if (now()->diffInMinutes($record->created_at) > 10) {
+            throw ValidationException::withMessages(['otp' => 'OTP sudah kedaluwarsa.']);
+        }
+
+        if (!Hash::check($request->otp, $record->token)) {
+            throw ValidationException::withMessages(['otp' => 'OTP tidak valid.']);
+        }
+
+        $resetToken = Str::random(64);
+        DB::table('password_reset_tokens')->where('email', $request->email)->update([
+            'token' => Hash::make($resetToken),
+            'created_at' => now(),
+        ]);
+
+        return response()->json([
+            'message' => 'OTP valid.',
+            'data' => [
+                'reset_token' => $resetToken,
+            ],
+        ]);
+    }
+
+    public function resetPassword(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'reset_token' => 'required|string',
+            'password' => 'required|string|min:8|confirmed',
+        ]);
+
+        $record = DB::table('password_reset_tokens')->where('email', $request->email)->first();
+        if (!$record || !Hash::check($request->reset_token, $record->token)) {
+            throw ValidationException::withMessages(['reset_token' => 'Token reset tidak valid.']);
+        }
+
+        if (now()->diffInMinutes($record->created_at) > 10) {
+            throw ValidationException::withMessages(['reset_token' => 'Token reset sudah kedaluwarsa.']);
+        }
+
+        $user = User::where('email', $request->email)->firstOrFail();
+        $user->password = Hash::make($request->password);
+        $user->save();
+
+        DB::table('password_reset_tokens')->where('email', $request->email)->delete();
+        $user->tokens()->delete();
+
+        return response()->json([
+            'message' => 'Password berhasil direset.',
         ]);
     }
 }

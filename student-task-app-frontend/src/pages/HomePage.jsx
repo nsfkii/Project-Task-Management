@@ -6,6 +6,7 @@ import { CheckCircle, Calendar, Clock, ArrowRight, Plus, Sun, Moon, ChevronDown,
 import api from '../api/axios';
 import Footer from '../components/Footer';
 import AppGallery from '../components/AppGallery';
+import { buildAvatarUrl, parseTasksPayload, toArray } from '../utils/apiResponse';
 
 export default function HomePage() {
     const { user, theme, setTheme } = useContext(AuthContext);
@@ -28,17 +29,20 @@ export default function HomePage() {
                 setLoading(true);
                 try {
                     const res = await api.get('/tasks?all=true');
-                    const tasks = res.data;
+                    const { tasks: unsafeTasks } = parseTasksPayload(res.data);
+                    const tasks = toArray(unsafeTasks);
+                    
                     setStats({
                         total: tasks.length,
                         done: tasks.filter(t => t.status === 'done').length,
                         progress: tasks.filter(t => t.status === 'progress').length,
                         pending: tasks.filter(t => t.status === 'pending').length,
                     });
+                    
                     const sorted = [...tasks].sort((a,b) => new Date(a.deadline) - new Date(b.deadline));
                     setRecentTasks(sorted.slice(0,5));
                 } catch (error) {
-                    console.error("Gagal mengambil data", error);
+                    console.error("Gagal mengambil data:", error);
                 } finally {
                     setLoading(false);
                 }
@@ -66,20 +70,20 @@ export default function HomePage() {
                                 alt="StudentTask Logo"
                                 className="h-7 sm:h-8 md:h-9 w-auto object-contain hidden dark:block"
                             />
-                            <span className="text-base sm:text-lg md:text-xl font-bold text-blue-600 dark:text-indigo-400">
+                            <span className="text-base sm:text-lg md:text-xl font-bold text-indigo-600 dark:text-indigo-400">
                                 StudentTask
                             </span>
                         </Link>
 
                         {/* Navigasi + Actions */}
                         <div className="flex items-center gap-2 sm:gap-3 md:gap-4">
-                            <Link to="/" className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-blue-600 transition hidden sm:inline-block">
+                            <Link to="/" className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-indigo-600 transition hidden sm:inline-block">
                                 Beranda
                             </Link>
-                            <Link to="/dashboard" className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-blue-600 transition hidden sm:inline-block">
+                            <Link to="/dashboard" className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-indigo-600 transition hidden sm:inline-block">
                                 Dashboard
                             </Link>
-                            <Link to="/profile" className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-blue-600 transition hidden sm:inline-block">
+                            <Link to="/profile" className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-indigo-600 transition hidden sm:inline-block">
                                 Profil
                             </Link>
                             
@@ -100,7 +104,7 @@ export default function HomePage() {
                                     <div className="h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10 rounded-full ring-2 ring-indigo-50 dark:ring-slate-700 overflow-hidden shrink-0">
                                         {user?.avatar ? (
                                             <img 
-                                                src={`http://127.0.0.1:8000/storage/${user.avatar}`} 
+                                                src={buildAvatarUrl(user.avatar)} 
                                                 alt="Profile" 
                                                 className="w-full h-full object-cover" 
                                             />
@@ -124,7 +128,7 @@ export default function HomePage() {
                                         className="w-full flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/50 rounded-t-xl transition-colors"
                                     >
                                         <img 
-                                            src={user?.avatar ? `http://127.0.0.1:8000/storage/${user.avatar}` : `https://ui-avatars.com/api/?name=${user?.name || 'User'}&background=6366f1&color=fff&size=96`} 
+                                            src={user?.avatar ? buildAvatarUrl(user.avatar) : `https://ui-avatars.com/api/?name=${user?.name || 'User'}&background=6366f1&color=fff&size=96`} 
                                             alt="Profile" 
                                             className="w-4 h-4 sm:w-5 sm:h-5 rounded-full"
                                         />
@@ -144,9 +148,8 @@ export default function HomePage() {
                     </div>
                 </header>
 
-                {/* Main Content */}
+                {/* Main Content - sama seperti sebelumnya... */}
                 <main className="flex-1 max-w-5xl mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8 w-full">
-                    {/* Welcome */}
                     <div className="mb-4 sm:mb-6 md:mb-8">
                         <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-800 dark:text-white mb-1">
                             Hai, {user.name}! 👋
@@ -156,7 +159,7 @@ export default function HomePage() {
                         </p>
                     </div>
 
-                    {/* Stats Cards - 2 kolom mobile, 4 kolom desktop */}
+                    {/* Stats Cards */}
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-5 mb-6 sm:mb-8 md:mb-10">
                         <div className="p-3 sm:p-4 md:p-5 rounded-xl sm:rounded-2xl bg-white dark:bg-slate-800 shadow-sm border border-slate-100 dark:border-slate-700 hover:-translate-y-0.5 transition-transform cursor-pointer">
                             <div className="flex items-center gap-2 sm:gap-3">
@@ -211,7 +214,7 @@ export default function HomePage() {
                     
                     {loading ? (
                         <div className="text-center py-8 sm:py-12">
-                            <div className="inline-block animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-blue-600"></div>
+                            <div className="inline-block animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-indigo-600"></div>
                             <p className="mt-2 sm:mt-3 text-sm sm:text-base text-slate-500 dark:text-slate-400">Memuat...</p>
                         </div>
                     ) : (
@@ -247,7 +250,6 @@ export default function HomePage() {
                         </div>
                     )}
 
-                    {/* CTA */}
                     <div className="mt-6 sm:mt-8 text-center pb-6 sm:pb-8">
                         <Link 
                             to="/dashboard" 
@@ -275,8 +277,8 @@ export default function HomePage() {
                         <span className="text-lg sm:text-xl font-bold text-indigo-600 dark:text-indigo-400">StudentTask</span>
                     </Link>
                     <div className="flex items-center gap-2 sm:gap-4">
-                        <Link to="/login" className="px-3 sm:px-4 py-1.5 sm:py-2 text-sm sm:text-base text-slate-600 dark:text-slate-300 hover:text-blue-600 transition">Login</Link>
-                        <Link to="/register" className="px-3 sm:px-4 py-1.5 sm:py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition text-sm sm:text-base">Daftar</Link>
+                        <Link to="/login" className="px-3 sm:px-4 py-1.5 sm:py-2 text-sm sm:text-base text-slate-600 dark:text-slate-300 hover:text-indigo-600 transition">Login</Link>
+                        <Link to="/register" className="px-3 sm:px-4 py-1.5 sm:py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition text-sm sm:text-base">Daftar</Link>
                         <button onClick={toggleTheme} className="p-2 sm:p-2.5 rounded-full bg-white dark:bg-slate-800 shadow-sm hover:shadow-md border border-slate-100 dark:border-slate-700 text-slate-500 dark:text-slate-300 transition-all">
                             {theme === 'light' ? <Moon size={16} className="sm:w-5 sm:h-5" /> : <Sun size={16} className="sm:w-5 sm:h-5" />}
                         </button>
@@ -289,16 +291,16 @@ export default function HomePage() {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16 md:py-24 text-center">
                     <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-slate-800 dark:text-white mb-4 sm:mb-6 leading-tight">
                         Kelola Tugas Kuliah Anda<br />
-                        <span className="text-blue-600">Menjadi Lebih Mudah & Terstruktur</span>
+                        <span className="text-indigo-600">Menjadi Lebih Mudah & Terstruktur</span>
                     </h1>
                     <p className="text-base sm:text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto mb-6 sm:mb-8 px-2">
                         StudentTask membantu mahasiswa/pelajar mencatat deadline, memantau progress, dan tetap produktif sepanjang semester.
                     </p>
                     <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center">
-                        <Link to="/register" className="w-full sm:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold flex items-center justify-center gap-2 shadow-lg text-sm sm:text-base">
+                        <Link to="/register" className="w-full sm:w-auto px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold flex items-center justify-center gap-2 shadow-lg text-sm sm:text-base">
                             <Plus size={18} /> Mulai Sekarang
                         </Link>
-                        <a href="#fitur" className="w-full sm:w-auto px-6 py-3 border border-blue-300 dark:border-blue-600 rounded-xl text-blue-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition text-sm sm:text-base text-center">
+                        <a href="#fitur" className="w-full sm:w-auto px-6 py-3 border border-indigo-300 dark:border-indigo-600 rounded-xl text-indigo-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition text-sm sm:text-base text-center">
                             Lihat Fitur
                         </a>
                     </div>
@@ -311,17 +313,17 @@ export default function HomePage() {
                     <h2 className="text-2xl sm:text-3xl font-bold text-center text-slate-800 dark:text-white mb-8 sm:mb-12">Fitur Unggulan</h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
                         <div className="p-5 sm:p-6 rounded-2xl bg-slate-50 dark:bg-slate-700/50 text-center hover:-translate-y-1 transition-transform">
-                            <CheckCircle className="h-10 w-10 sm:h-12 sm:w-12 text-blue-600 mx-auto mb-3 sm:mb-4" />
+                            <CheckCircle className="h-10 w-10 sm:h-12 sm:w-12 text-indigo-600 mx-auto mb-3 sm:mb-4" />
                             <h3 className="text-lg sm:text-xl font-semibold mb-2 text-slate-800 dark:text-white">Manajemen Tugas</h3>
                             <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300">Catat semua tugas, deadline, dan prioritas.</p>
                         </div>
                         <div className="p-5 sm:p-6 rounded-2xl bg-slate-50 dark:bg-slate-700/50 text-center hover:-translate-y-1 transition-transform">
-                            <Calendar className="h-10 w-10 sm:h-12 sm:w-12 text-blue-600 mx-auto mb-3 sm:mb-4" />
+                            <Calendar className="h-10 w-10 sm:h-12 sm:w-12 text-indigo-600 mx-auto mb-3 sm:mb-4" />
                             <h3 className="text-lg sm:text-xl font-semibold mb-2 text-slate-800 dark:text-white">Kalender Deadline</h3>
                             <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300">Lihat jadwal tugas dalam tampilan kalender.</p>
                         </div>
                         <div className="p-5 sm:p-6 rounded-2xl bg-slate-50 dark:bg-slate-700/50 text-center hover:-translate-y-1 transition-transform">
-                            <Clock className="h-10 w-10 sm:h-12 sm:w-12 text-blue-600 mx-auto mb-3 sm:mb-4" />
+                            <Clock className="h-10 w-10 sm:h-12 sm:w-12 text-indigo-600 mx-auto mb-3 sm:mb-4" />
                             <h3 className="text-lg sm:text-xl font-semibold mb-2 text-slate-800 dark:text-white">Pengingat</h3>
                             <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300">Dapatkan notifikasi tugas mendekati deadline.</p>
                         </div>
@@ -336,7 +338,7 @@ export default function HomePage() {
                     <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 mb-6 sm:mb-8 max-w-xl mx-auto">
                         Bergabunglah dengan ribuan mahasiswa & pelajar yang sudah menggunakan StudentTask.
                     </p>
-                    <Link to="/register" className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold shadow-lg text-sm sm:text-base">
+                    <Link to="/register" className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold shadow-lg text-sm sm:text-base">
                         <ArrowRight size={18} /> Daftar Sekarang
                     </Link>
                 </div>

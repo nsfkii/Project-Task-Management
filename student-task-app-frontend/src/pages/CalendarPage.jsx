@@ -2,17 +2,21 @@ import { useState, useEffect, useMemo } from 'react';
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Clock, AlertCircle, CheckCircle } from 'lucide-react';
 import api from '../api/axios';
 import Swal from 'sweetalert2';
+import { parseTasksPayload, toArray } from '../utils/apiResponse';
 
 export default function CalendarPage() {
     const [tasks, setTasks] = useState([]);
     const [loading, setLoading] = useState(true);
     const [currentDate, setCurrentDate] = useState(new Date());
 
+    // PERBAIKAN 1: Fix Fetch Data - handle response format
     const fetchTasks = async () => {
         setLoading(true);
         try {
             const response = await api.get('/tasks?all=true');
-            setTasks(response.data);
+            const { tasks } = parseTasksPayload(response.data);
+            const tasksData = toArray(tasks);
+            setTasks(tasksData);
         } catch (error) {
             console.error("Gagal mengambil data kalender", error);
         } finally {
@@ -98,17 +102,17 @@ export default function CalendarPage() {
         setCurrentDate(new Date());
     };
 
-    // SweetAlert2 untuk detail tugas
+    // PERBAIKAN 2: Fix Task Click - tambahkan optional chaining dan default values
     const handleTaskClick = (task) => {
         Swal.fire({
-            title: task.title,
+            title: task.title || 'Tanpa Judul',
             html: `
                 <div class="text-left">
                     <p class="mb-2"><strong>📚 Mata Kuliah:</strong> ${task.subject?.name || task.subject || '-'}</p>
-                    <p class="mb-2"><strong>📅 Deadline:</strong> ${task.deadline}</p>
+                    <p class="mb-2"><strong>📅 Deadline:</strong> ${task.deadline || '-'}</p>
                     <p class="mb-2"><strong>⚡ Prioritas:</strong> 
                         <span class="px-2 py-1 rounded-full text-xs font-bold ${task.priority === 'high' ? 'bg-red-100 text-red-700' : task.priority === 'medium' ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'}">
-                            ${task.priority.toUpperCase()}
+                            ${(task.priority || 'medium').toUpperCase()}
                         </span>
                     </p>
                     <p class="mb-2"><strong>📌 Status:</strong> 
@@ -142,7 +146,7 @@ export default function CalendarPage() {
         }
     };
 
-    // Ikon kecil untuk deadine mendekati
+    // Ikon kecil untuk deadline mendekati
     const getDeadlineIcon = (task) => {
         if (task.status === 'done') return <CheckCircle size={12} className="inline mr-1" />;
         const today = new Date();
@@ -159,11 +163,11 @@ export default function CalendarPage() {
         <div className="space-y-6">
             {/* Header Halaman dengan efek glass */}
             <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm p-5 rounded-2xl shadow-md border border-slate-100 dark:border-slate-700 flex items-center gap-4">
-                <div className="p-3 bg-gradient-to-br from-indigo-500 to-red-600 text-white rounded-xl shadow-lg">
+                <div className="p-3 bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-xl shadow-lg">
                     <CalendarIcon size={24} />
                 </div>
                 <div>
-                    <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Kalender Deadline</h2>
+                    <h2 className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Kalender Deadline</h2>
                     <p className="text-sm text-slate-500 dark:text-slate-400">Pantau jadwal pengumpulan tugas kamu di sini</p>
                 </div>
             </div>
@@ -202,7 +206,7 @@ export default function CalendarPage() {
                                     key={idx}
                                     className={`min-h-[110px] p-2 rounded-xl transition-all duration-200 group ${
                                         isTodayFlag
-                                            ? 'bg-gradient-to-br from-indigo-50 to-indigo-100 dark:from-indigo-500/20 dark:to-indigo-600/10 border-2 border-blue-400 dark:border-blue-500 shadow-md'
+                                            ? 'bg-gradient-to-br from-indigo-50 to-indigo-100 dark:from-indigo-500/20 dark:to-indigo-600/10 border-2 border-indigo-400 dark:border-indigo-500 shadow-md'
                                             : 'bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 hover:shadow-md hover:scale-[1.02]'
                                     } ${!day.isCurrentMonth ? 'opacity-40' : ''}`}
                                 >
@@ -210,14 +214,14 @@ export default function CalendarPage() {
                                         <span
                                             className={`inline-flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold transition-all ${
                                                 isTodayFlag
-                                                    ? 'bg-blue-600 text-white shadow-md shadow-indigo-500/30'
+                                                    ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/30'
                                                     : 'text-slate-700 dark:text-slate-300 group-hover:bg-slate-100 dark:group-hover:bg-slate-700'
                                             }`}
                                         >
                                             {day.date.getDate()}
                                         </span>
                                         {day.tasks.length > 0 && (
-                                            <span className="text-xs font-bold text-white bg-blue-500 rounded-full px-1.5 py-0.5 shadow-sm">
+                                            <span className="text-xs font-bold text-white bg-indigo-500 rounded-full px-1.5 py-0.5 shadow-sm">
                                                 {day.tasks.length}
                                             </span>
                                         )}
@@ -252,9 +256,9 @@ export default function CalendarPage() {
                 <div className="p-4 border-t border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/30 flex justify-center">
                     <button
                         onClick={goToToday}
-                        className="px-5 py-2 text-sm font-semibold rounded-xl bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 border border-indigo-200 dark:border-blue-800 shadow-sm hover:shadow-md hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all duration-200"
+                        className="px-5 py-2 text-sm font-semibold rounded-xl bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 shadow-sm hover:shadow-md hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all duration-200"
                     >
-                         Hari Ini
+                        📍 Hari Ini
                     </button>
                 </div>
             </div>

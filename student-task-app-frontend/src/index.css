@@ -2,6 +2,39 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ========== THEME ACCENT TOKENS ========== */
+:root {
+  --st-primary-500: #5f8f87;
+  --st-primary-600: #4e7670;
+  --st-primary-700: #43615d;
+  --st-primary-100: #e2efee;
+  --st-primary-200: #c4dedb;
+}
+
+:root.theme-calm {
+  --st-primary-500: #5f8f87;
+  --st-primary-600: #4e7670;
+  --st-primary-700: #43615d;
+  --st-primary-100: #e2efee;
+  --st-primary-200: #c4dedb;
+}
+
+:root.theme-forest {
+  --st-primary-500: #4d8b68;
+  --st-primary-600: #3f7356;
+  --st-primary-700: #365f48;
+  --st-primary-100: #dff0e6;
+  --st-primary-200: #bfdfcd;
+}
+
+:root.theme-midnight {
+  --st-primary-500: #5d728f;
+  --st-primary-600: #4c5f78;
+  --st-primary-700: #3d4d62;
+  --st-primary-100: #e3e9f1;
+  --st-primary-200: #c5d2e3;
+}
+
 /* ========== BASE STYLES ========== */
 @layer base {
   html {
@@ -34,6 +67,48 @@
   }
 }
 
+/* ========== GLOBAL ACCENT OVERRIDES ========== */
+:root[class*='theme-'] .bg-indigo-600,
+:root[class*='theme-'] .bg-blue-600 {
+  background-color: var(--st-primary-600) !important;
+}
+
+:root[class*='theme-'] .hover\:bg-indigo-700:hover,
+:root[class*='theme-'] .hover\:bg-blue-700:hover {
+  background-color: var(--st-primary-700) !important;
+}
+
+:root[class*='theme-'] .text-indigo-600,
+:root[class*='theme-'] .text-blue-600 {
+  color: var(--st-primary-600) !important;
+}
+
+:root[class*='theme-'] .bg-indigo-100,
+:root[class*='theme-'] .bg-blue-100 {
+  background-color: var(--st-primary-100) !important;
+}
+
+:root[class*='theme-'] .border-indigo-200,
+:root[class*='theme-'] .border-blue-200 {
+  border-color: var(--st-primary-200) !important;
+}
+
+:root[class*='theme-'] .focus\:ring-indigo-500:focus,
+:root[class*='theme-'] .focus\:ring-blue-500:focus {
+  --tw-ring-color: var(--st-primary-500) !important;
+}
+
+:root[class*='theme-'] .from-indigo-500 {
+  --tw-gradient-from: var(--st-primary-500) var(--tw-gradient-from-position) !important;
+  --tw-gradient-to: rgb(255 255 255 / 0) var(--tw-gradient-to-position) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+}
+
+:root[class*='theme-'] .to-blue-500,
+:root[class*='theme-'] .to-purple-600 {
+  --tw-gradient-to: var(--st-primary-700) var(--tw-gradient-to-position) !important;
+}
+
 /* ========== COMPONENT STYLES ========== */
 @layer components {
   /* Responsive container */
@@ -50,7 +125,7 @@
   
   @screen md {
     .container-responsive {
-      max-width: 768px;
+      max-width: 768px; /* Hapus backtick di sini */
     }
   }
   

@@ -12,6 +12,11 @@ use Exception;
 
 class SocialAuthController extends Controller
 {
+    private function frontendBaseUrl(): string
+    {
+        return rtrim((string) env('FRONTEND_URL', config('app.url')), '/');
+    }
+
     // 1. Endpoint untuk redirect ke Google
     public function redirectToGoogle()
     {
@@ -40,10 +45,10 @@ class SocialAuthController extends Controller
             Auth::login($user);
             $token = $user->createToken('auth-token')->plainTextToken;
 
-            return redirect()->away(env('FRONTEND_URL') . '/auth/callback?token=' . $token . '&user=' . urlencode($user->toJson()));
+            return redirect()->away($this->frontendBaseUrl() . '/auth/callback?token=' . $token . '&user=' . urlencode($user->toJson()));
 
         } catch (Exception $e) {
-            return redirect()->away(env('FRONTEND_URL') . '/login?error=Unable to login, try again.');
+            return redirect()->away($this->frontendBaseUrl() . '/login?error=Unable to login, try again.');
         }
     }
 }

@@ -1,23 +1,27 @@
 import axios from 'axios';
 
 const api = axios.create({
-    baseURL: 'http://127.0.0.1:8000/api',
+    baseURL: import.meta.env.VITE_API_URL || 'https://studentask.web.id/api',
     headers: {
-        'Content-Type': 'application/json',
         'Accept': 'application/json',
     },
+    withCredentials: true,
 });
 
-// Interceptor untuk menambahkan token ke setiap request
-api.interceptors.request.use(
-    (config) => {
-        const token = localStorage.getItem('token');
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
-        }
-        return config;
-    },
-    (error) => Promise.reject(error)
-);
+// Interceptor untuk token
+api.interceptors.request.use((config) => {
+    const token = localStorage.getItem('token');
+
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+    }
+
+    // AUTO HANDLE FORM DATA
+    if (config.data instanceof FormData) {
+        delete config.headers['Content-Type'];
+    }
+
+    return config;
+});
 
 export default api;

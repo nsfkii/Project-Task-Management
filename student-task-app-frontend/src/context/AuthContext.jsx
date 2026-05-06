@@ -1,5 +1,6 @@
 import { createContext, useState, useEffect } from 'react';
 import api from '../api/axios';
+import { parseUserPayload } from '../utils/apiResponse';
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const AuthContext = createContext();
@@ -9,6 +10,7 @@ export const AuthProvider = ({ children }) => {
     const [userProfile, setUserProfile] = useState(null); // <-- Cache untuk profile
     const [token, setToken] = useState(localStorage.getItem('token') || '');
     const [theme, setTheme] = useState('light');
+    const [colorTheme, setColorTheme] = useState(localStorage.getItem('colorTheme') || 'calm');
     const [loading, setLoading] = useState(true);
 
     const logout = () => {
@@ -39,9 +41,10 @@ export const AuthProvider = ({ children }) => {
             if (token) {
                 try {
                     const response = await api.get('/user');
-                    setUser(response.data);
-                    setUserProfile(response.data); // <-- Cache profile
-                    setTheme(response.data.theme || 'light');
+                    const parsedUser = parseUserPayload(response.data);
+                    setUser(parsedUser);
+                    setUserProfile(parsedUser); // <-- Cache profile
+                    setTheme(parsedUser?.theme || 'light');
                 } catch (error) {
                     console.error("Token tidak valid", error);
                     logout();
@@ -61,6 +64,13 @@ export const AuthProvider = ({ children }) => {
         }
     }, [theme]);
 
+    useEffect(() => {
+        const root = document.documentElement;
+        root.classList.remove('theme-calm', 'theme-forest', 'theme-midnight');
+        root.classList.add(`theme-${colorTheme}`);
+        localStorage.setItem('colorTheme', colorTheme);
+    }, [colorTheme]);
+
     return (
         <AuthContext.Provider value={{
             user,
@@ -70,6 +80,8 @@ export const AuthProvider = ({ children }) => {
             token,
             theme,
             setTheme,
+            colorTheme,
+            setColorTheme,
             login,
             logout,
             loading

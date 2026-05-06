@@ -6,6 +6,7 @@ import { Sun, Moon, ChevronDown, Menu, LogOut, X } from 'lucide-react';
 import api from '../api/axios';
 import NotificationBell from './NotificationBell';
 import Swal from 'sweetalert2';
+import { buildAvatarUrl } from '../utils/apiResponse';
 
 export default function Topbar({ onToggleSidebar }) {
     const { user, theme, setTheme, logout } = useContext(AuthContext);
@@ -201,7 +202,7 @@ export default function Topbar({ onToggleSidebar }) {
                             <div className="flex items-center gap-2 cursor-pointer">
                                 <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-full ring-2 ring-indigo-50 dark:ring-slate-700 overflow-hidden">
                                     {user?.avatar ? (
-                                        <img src={`http://127.0.0.1:8000/storage/${user.avatar}`} alt="Profile" className="w-full h-full object-cover" />
+                                        <img src={buildAvatarUrl(user.avatar)} alt="Profile" className="w-full h-full object-cover" />
                                     ) : (
                                         <img src={`https://ui-avatars.com/api/?name=${user?.name || 'User'}&background=6366f1&color=fff&size=96`} alt="Profile" />
                                     )}
@@ -218,7 +219,7 @@ export default function Topbar({ onToggleSidebar }) {
                                     className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/50 rounded-t-xl transition-colors"
                                 >
                                     <img 
-                                        src={user?.avatar ? `http://127.0.0.1:8000/storage/${user.avatar}` : `https://ui-avatars.com/api/?name=${user?.name || 'User'}&background=6366f1&color=fff&size=96`} 
+                                        src={user?.avatar ? buildAvatarUrl(user.avatar) : `https://ui-avatars.com/api/?name=${user?.name || 'User'}&background=6366f1&color=fff&size=96`} 
                                         alt="Profile" 
                                         className="w-5 h-5 rounded-full"
                                     />
@@ -277,7 +278,7 @@ export default function Topbar({ onToggleSidebar }) {
                         <div className="flex items-center gap-3 pb-3 border-b border-slate-100 dark:border-slate-700 mb-2">
                             <div className="h-10 w-10 rounded-full ring-2 ring-indigo-50 dark:ring-slate-700 overflow-hidden">
                                 {user?.avatar ? (
-                                    <img src={`http://127.0.0.1:8000/storage/${user.avatar}`} alt="Profile" className="w-full h-full object-cover" />
+                                    <img src={buildAvatarUrl(user.avatar)} alt="Profile" className="w-full h-full object-cover" />
                                 ) : (
                                     <img src={`https://ui-avatars.com/api/?name=${user?.name || 'User'}&background=6366f1&color=fff&size=96`} alt="Profile" />
                                 )}

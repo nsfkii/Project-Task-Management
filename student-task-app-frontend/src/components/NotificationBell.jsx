@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { Bell, X, AlertCircle, Clock, CheckCircle, ChevronRight, ExternalLink } from 'lucide-react';
 import api from '../api/axios';
 import Swal from 'sweetalert2';
+import { parseTasksPayload, toArray } from '../utils/apiResponse';
 
 export default function NotificationBell() {
     const [isOpen, setIsOpen] = useState(false);
@@ -15,12 +16,21 @@ export default function NotificationBell() {
         setLoading(true);
         try {
             const response = await api.get('/tasks?all=true');
-            const tasks = response.data;
+            const { tasks } = parseTasksPayload(response.data);
+            const safeTasks = toArray(tasks);
+            
+            // Bonus fix: cek validitas array
+            if (!Array.isArray(safeTasks)) {
+                console.error("Tasks bukan array:", safeTasks);
+                setNearDeadlineTasks([]);
+                setUnreadCount(0);
+                return;
+            }
             
             const today = new Date();
             today.setHours(0, 0, 0, 0);
             
-            const near = tasks.filter(task => {
+            const near = safeTasks.filter(task => {
                 if (task.status === 'done') return false;
                 const taskDate = new Date(task.deadline);
                 taskDate.setHours(0, 0, 0, 0);
@@ -32,6 +42,8 @@ export default function NotificationBell() {
             setUnreadCount(near.length);
         } catch (error) {
             console.error("Gagal mengambil notifikasi:", error);
+            setNearDeadlineTasks([]);
+            setUnreadCount(0);
         } finally {
             setLoading(false);
         }
@@ -60,18 +72,18 @@ export default function NotificationBell() {
             html: `
                 <div class="text-left space-y-3">
                     <div class="p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
-                        <p class="text-sm font-semibold text-slate-500 dark:text-slate-400 mb-1">📚 Mata Kuliah</p>
+                        <p class="text-sm font-semibold text-slate-500 dark:text-slate-400 mb-1"> Mata Kuliah</p>
                         <p class="text-slate-800 dark:text-slate-200">${task.subject?.name || task.subject || 'Mata Kuliah'}</p>
                     </div>
                     
                     <div class="p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
-                        <p class="text-sm font-semibold text-slate-500 dark:text-slate-400 mb-1">📅 Deadline</p>
+                        <p class="text-sm font-semibold text-slate-500 dark:text-slate-400 mb-1"> Deadline</p>
                         <p class="text-slate-800 dark:text-slate-200">${task.deadline}</p>
                     </div>
                     
                     <div class="grid grid-cols-2 gap-3">
                         <div class="p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
-                            <p class="text-sm font-semibold text-slate-500 dark:text-slate-400 mb-1">⚡ Prioritas</p>
+                            <p class="text-sm font-semibold text-slate-500 dark:text-slate-400 mb-1"> Prioritas</p>
                             <span class="inline-block px-2 py-1 rounded-full text-xs font-bold ${
                                 task.priority === 'high' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
                                 task.priority === 'medium' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' :
@@ -94,7 +106,7 @@ export default function NotificationBell() {
                     </div>
                     
                     <div class="p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
-                        <p class="text-sm font-semibold text-slate-500 dark:text-slate-400 mb-1">📝 Deskripsi</p>
+                        <p class="text-sm font-semibold text-slate-500 dark:text-slate-400 mb-1"> Deskripsi</p>
                         <p class="text-slate-800 dark:text-slate-200">${task.description || 'Tidak ada deskripsi'}</p>
                     </div>
                     
@@ -183,7 +195,7 @@ export default function NotificationBell() {
 
             {/* Dropdown Notifikasi */}
             {isOpen && (
-                <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-700 z-50 overflow-hidden">
+                <div className="absolute right-0 mt-2 w-[min(22rem,calc(100vw-1rem))] sm:w-96 bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-700 z-50 overflow-hidden">
                     {/* Header */}
                     <div className="flex justify-between items-center p-4 border-b border-slate-100 dark:border-slate-700 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-950/30 dark:to-purple-950/30">
                         <div className="flex items-center gap-2">

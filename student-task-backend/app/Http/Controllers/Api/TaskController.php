@@ -11,38 +11,48 @@ class TaskController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Task::with('subject')->where('user_id', Auth::id());
+        $baseQuery = Task::with('subject')->where('user_id', Auth::id());
 
         if ($request->has('status')) {
-            $query->where('status', $request->status);
+            $baseQuery->where('status', $request->status);
         }
         if ($request->has('priority')) {
-            $query->where('priority', $request->priority);
+            $baseQuery->where('priority', $request->priority);
         }
         if ($request->has('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('title', 'ilike', "%{$search}%")
+            $baseQuery->where(function($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
                   ->orWhereHas('subject', function($sq) use ($search) {
-                      $sq->where('name', 'ilike', "%{$search}%");
+                      $sq->where('name', 'like', "%{$search}%");
                   });
             });
         }
 
-        if ($request->has('all')) {
-            return response()->json($query->orderBy('deadline', 'asc')->get());
-        }
-
         $stats = [
-            'total' => $query->count(),
-            'done' => (clone $query)->where('status', 'done')->count(),
-            'progress' => (clone $query)->where('status', 'progress')->count(),
-            'pending' => (clone $query)->where('status', 'pending')->count(),
+            'total' => (clone $baseQuery)->count(),
+            'done' => (clone $baseQuery)->where('status', 'done')->count(),
+            'progress' => (clone $baseQuery)->where('status', 'progress')->count(),
+            'pending' => (clone $baseQuery)->where('status', 'pending')->count(),
         ];
 
-        $tasks = $query->orderBy('deadline', 'asc')->paginate(6);
+        if ($request->boolean('all')) {
+            return response()->json([
+                'data' => [
+                    'tasks' => (clone $baseQuery)->orderBy('deadline', 'asc')->get(),
+                    'stats' => $stats,
+                ],
+            ]);
+        }
 
-        return response()->json(['stats' => $stats, 'tasks' => $tasks]);
+        $tasks = (clone $baseQuery)->orderBy('deadline', 'asc')->paginate(6);
+
+        return response()->json([
+            'data' => [
+                'tasks' => $tasks,
+                'stats' => $stats,
+            ],
+        ]);
     }
 
     public function store(Request $request)
@@ -75,7 +85,7 @@ class TaskController extends Controller
     {
         $task = Task::with('subject')->where('user_id', Auth::id())->find($id);
         if (!$task) return response()->json(['message' => 'Task tidak ditemukan'], 404);
-        return response()->json($task);
+        return response()->json(['data' => $task]);
     }
 
     public function update(Request $request, $id)
