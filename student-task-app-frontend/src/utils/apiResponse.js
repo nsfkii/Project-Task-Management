@@ -32,6 +32,11 @@ export const parseUserPayload = (responseData) => {
 
 export const buildAvatarUrl = (avatarPath) => {
     if (!avatarPath) return null;
-    const base = (import.meta.env.VITE_STORAGE_URL || 'https://studentask.web.id/storage').replace(/\/$/, '');
-    return `${base}/${avatarPath}`;
+    if (/^https?:\/\//i.test(avatarPath)) {
+        return avatarPath;
+    }
+
+    const defaultBase = typeof window !== 'undefined' ? `${window.location.origin}/storage` : 'https://studentask.web.id/storage';
+    const base = (import.meta.env.VITE_STORAGE_URL || defaultBase).replace(/\/$/, '');
+    return `${base}/${avatarPath.replace(/^\/+/, '')}`;
 };

@@ -61,7 +61,6 @@ export default function Sidebar({ isOpen, onClose }) {
             icon: 'question',
             showCancelButton: true,
             confirmButtonColor: '#ef4444',
-            cancelButtonColor: '#6366f1',
             confirmButtonText: 'Ya, Logout',
             cancelButtonText: 'Batal',
             background: '#ffffff',

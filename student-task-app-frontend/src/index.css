@@ -4,34 +4,58 @@
 
 /* ========== THEME ACCENT TOKENS ========== */
 :root {
-  --st-primary-500: #5f8f87;
-  --st-primary-600: #4e7670;
-  --st-primary-700: #43615d;
-  --st-primary-100: #e2efee;
+  --st-primary: #5f8f87;
+  --st-primary-hover: #4a7a72;
+  --st-primary-light: #e8f0ee;
+  --st-secondary: #43615d;
+  --st-accent: #8fb0aa;
+  --st-sweetalert: #5f8f87;
+  --st-primary-500: var(--st-primary);
+  --st-primary-600: var(--st-primary);
+  --st-primary-700: var(--st-secondary);
+  --st-primary-100: var(--st-primary-light);
   --st-primary-200: #c4dedb;
 }
 
 :root.theme-calm {
-  --st-primary-500: #5f8f87;
-  --st-primary-600: #4e7670;
-  --st-primary-700: #43615d;
-  --st-primary-100: #e2efee;
+  --st-primary: #5f8f87;
+  --st-primary-hover: #4a7a72;
+  --st-primary-light: #e8f0ee;
+  --st-secondary: #43615d;
+  --st-accent: #8fb0aa;
+  --st-sweetalert: #5f8f87;
+  --st-primary-500: var(--st-primary);
+  --st-primary-600: var(--st-primary);
+  --st-primary-700: var(--st-secondary);
+  --st-primary-100: var(--st-primary-light);
   --st-primary-200: #c4dedb;
 }
 
 :root.theme-forest {
-  --st-primary-500: #4d8b68;
-  --st-primary-600: #3f7356;
-  --st-primary-700: #365f48;
-  --st-primary-100: #dff0e6;
+  --st-primary: #4d8b68;
+  --st-primary-hover: #3a7050;
+  --st-primary-light: #e4f0e8;
+  --st-secondary: #365f48;
+  --st-accent: #7aad8c;
+  --st-sweetalert: #4d8b68;
+  --st-primary-500: var(--st-primary);
+  --st-primary-600: var(--st-primary);
+  --st-primary-700: var(--st-secondary);
+  --st-primary-100: var(--st-primary-light);
   --st-primary-200: #bfdfcd;
 }
 
 :root.theme-midnight {
-  --st-primary-500: #5d728f;
-  --st-primary-600: #4c5f78;
-  --st-primary-700: #3d4d62;
-  --st-primary-100: #e3e9f1;
+  --st-primary: #5d728f;
+  --st-primary-hover: #485d75;
+  --st-primary-light: #e8ecf2;
+  --st-secondary: #3d4d62;
+  --st-accent: #8a9bb5;
+  --st-sweetalert: #5d728f;
+  --st-primary-500: var(--st-primary);
+  --st-primary-600: var(--st-primary);
+  --st-primary-700: var(--st-secondary);
+  --st-primary-100: var(--st-primary-light);
   --st-primary-200: #c5d2e3;
 }
 
@@ -68,45 +92,149 @@
 }
 
 /* ========== GLOBAL ACCENT OVERRIDES ========== */
+:root[class*='theme-'] .bg-indigo-500,
 :root[class*='theme-'] .bg-indigo-600,
-:root[class*='theme-'] .bg-blue-600 {
-  background-color: var(--st-primary-600) !important;
+:root[class*='theme-'] .bg-blue-500,
+:root[class*='theme-'] .bg-blue-600,
+:root[class*='theme-'] .disabled\:bg-blue-400:disabled {
+  background-color: var(--st-primary) !important;
 }
 
+:root[class*='theme-'] .hover\:bg-indigo-600:hover,
 :root[class*='theme-'] .hover\:bg-indigo-700:hover,
+:root[class*='theme-'] .hover\:bg-blue-600:hover,
 :root[class*='theme-'] .hover\:bg-blue-700:hover {
-  background-color: var(--st-primary-700) !important;
+  background-color: var(--st-primary-hover) !important;
 }
 
+:root[class*='theme-'] .text-indigo-500,
 :root[class*='theme-'] .text-indigo-600,
+:root[class*='theme-'] .text-indigo-700,
+:root[class*='theme-'] .text-indigo-400,
+:root[class*='theme-'] .text-blue-400,
+:root[class*='theme-'] .text-blue-500,
 :root[class*='theme-'] .text-blue-600 {
-  color: var(--st-primary-600) !important;
+  color: var(--st-primary) !important;
 }
 
+:root[class*='theme-'] .text-blue-700,
+:root[class*='theme-'] .hover\:text-indigo-700:hover {
+  color: var(--st-secondary) !important;
+}
+
+:root[class*='theme-'] .hover\:text-indigo-500:hover,
+:root[class*='theme-'] .hover\:text-indigo-600:hover,
+:root[class*='theme-'] .hover\:text-blue-600:hover,
+:root[class*='theme-'] .group:hover .group-hover\:text-indigo-600 {
+  color: var(--st-primary) !important;
+}
+
+:root[class*='theme-'] .group:focus-within .group-focus-within\:text-indigo-500 {
+  color: var(--st-primary) !important;
+}
+
+:root[class*='theme-'] .bg-indigo-50,
 :root[class*='theme-'] .bg-indigo-100,
-:root[class*='theme-'] .bg-blue-100 {
-  background-color: var(--st-primary-100) !important;
+:root[class*='theme-'] .bg-indigo-200\/20,
+:root[class*='theme-'] .bg-blue-50,
+:root[class*='theme-'] .bg-blue-100,
+:root[class*='theme-'] .bg-purple-200\/20 {
+  background-color: var(--st-primary-light) !important;
 }
 
+:root[class*='theme-'] .hover\:bg-indigo-50:hover,
+:root[class*='theme-'] .hover\:bg-indigo-100:hover,
+:root[class*='theme-'] .hover\:bg-blue-50:hover,
+:root[class*='theme-'] .hover\:bg-blue-100:hover {
+  background-color: var(--st-primary-light) !important;
+}
+
+:root[class*='theme-'] .border-indigo-300,
+:root[class*='theme-'] .border-indigo-400,
+:root[class*='theme-'] .border-indigo-500,
 :root[class*='theme-'] .border-indigo-200,
+:root[class*='theme-'] .border-indigo-600,
+:root[class*='theme-'] .border-blue-300,
 :root[class*='theme-'] .border-blue-200 {
   border-color: var(--st-primary-200) !important;
 }
 
+:root[class*='theme-'] .hover\:border-indigo-300:hover {
+  border-color: var(--st-accent) !important;
+}
+
 :root[class*='theme-'] .focus\:ring-indigo-500:focus,
 :root[class*='theme-'] .focus\:ring-blue-500:focus {
-  --tw-ring-color: var(--st-primary-500) !important;
+  --tw-ring-color: var(--st-primary) !important;
+}
+
+:root[class*='theme-'] .ring-indigo-50,
+:root[class*='theme-'] .group:hover .group-hover\:ring-indigo-400 {
+  --tw-ring-color: var(--st-primary-light) !important;
 }
 
 :root[class*='theme-'] .from-indigo-500 {
-  --tw-gradient-from: var(--st-primary-500) var(--tw-gradient-from-position) !important;
+  --tw-gradient-from: var(--st-primary) var(--tw-gradient-from-position) !important;
   --tw-gradient-to: rgb(255 255 255 / 0) var(--tw-gradient-to-position) !important;
   --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
 }
 
+:root[class*='theme-'] .from-indigo-50 {
+  --tw-gradient-from: color-mix(in srgb, var(--st-primary-light) 80%, white) var(--tw-gradient-from-position) !important;
+  --tw-gradient-to: rgb(255 255 255 / 0) var(--tw-gradient-to-position) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+}
+
+:root[class*='theme-'] .via-purple-500 {
+  --tw-gradient-to: rgb(255 255 255 / 0) var(--tw-gradient-to-position) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--st-accent) var(--tw-gradient-via-position), var(--tw-gradient-to) !important;
+}
+
+:root[class*='theme-'] .to-indigo-100,
 :root[class*='theme-'] .to-blue-500,
+:root[class*='theme-'] .to-indigo-700,
+:root[class*='theme-'] .to-pink-500,
+:root[class*='theme-'] .to-purple-50,
 :root[class*='theme-'] .to-purple-600 {
-  --tw-gradient-to: var(--st-primary-700) var(--tw-gradient-to-position) !important;
+  --tw-gradient-to: var(--st-secondary) var(--tw-gradient-to-position) !important;
+}
+
+:root[class*='theme-'] .dark\:text-indigo-300:is(.dark *),
+:root[class*='theme-'] .dark\:text-indigo-400:is(.dark *),
+:root[class*='theme-'] .dark\:text-blue-400:is(.dark *) {
+  color: var(--st-accent) !important;
+}
+
+:root[class*='theme-'] .dark\:hover\:text-indigo-300:hover:is(.dark *),
+:root[class*='theme-'] .dark\:hover\:text-indigo-400:hover:is(.dark *),
+:root[class*='theme-'] .dark\:hover\:text-blue-400:hover:is(.dark *) {
+  color: var(--st-accent) !important;
+}
+
+:root[class*='theme-'] .dark\:bg-indigo-500\/10:is(.dark *),
+:root[class*='theme-'] .dark\:bg-indigo-500\/20:is(.dark *),
+:root[class*='theme-'] .dark\:bg-indigo-900\/20:is(.dark *),
+:root[class*='theme-'] .dark\:bg-indigo-950\/30:is(.dark *),
+:root[class*='theme-'] .dark\:bg-blue-500\/10:is(.dark *),
+:root[class*='theme-'] .dark\:bg-blue-500\/20:is(.dark *),
+:root[class*='theme-'] .dark\:bg-purple-500\/10:is(.dark *) {
+  background-color: color-mix(in srgb, var(--st-primary) 18%, transparent) !important;
+}
+
+:root[class*='theme-'] .dark\:hover\:bg-indigo-500\/10:hover:is(.dark *),
+:root[class*='theme-'] .dark\:hover\:bg-indigo-500\/30:hover:is(.dark *),
+:root[class*='theme-'] .dark\:hover\:bg-indigo-900\/20:hover:is(.dark *),
+:root[class*='theme-'] .dark\:hover\:bg-indigo-900\/30:hover:is(.dark *),
+:root[class*='theme-'] .dark\:hover\:bg-blue-600:hover:is(.dark *) {
+  background-color: color-mix(in srgb, var(--st-primary) 28%, transparent) !important;
+}
+
+:root[class*='theme-'] .border-indigo-800,
+:root[class*='theme-'] .dark\:border-indigo-500:is(.dark *),
+:root[class*='theme-'] .dark\:border-indigo-600:is(.dark *),
+:root[class*='theme-'] .dark\:border-indigo-700:is(.dark *),
+:root[class*='theme-'] .dark\:border-indigo-800:is(.dark *) {
+  border-color: var(--st-secondary) !important;
 }
 
 /* ========== COMPONENT STYLES ========== */

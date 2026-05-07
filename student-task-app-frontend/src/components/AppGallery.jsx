@@ -1,6 +1,7 @@
 // src/components/AppGallery.jsx
-import { useState, useEffect } from 'react';
+import { useContext, useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Circle } from 'lucide-react';
+import { AuthContext } from '../context/AuthContext';
 
 // Data gambar (ganti dengan path gambar asli Anda)
 const screenshots = [
@@ -50,6 +51,7 @@ const screenshots = [
 ];
 
 export default function AppGallery() {
+    const { activeTheme } = useContext(AuthContext);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isAutoPlaying, setIsAutoPlaying] = useState(true);
     const [touchStart, setTouchStart] = useState(0);
@@ -135,7 +137,7 @@ export default function AppGallery() {
                                         className="w-full h-auto object-cover rounded-2xl"
                                         onError={(e) => {
                                             // Fallback jika gambar tidak ditemukan
-                                            e.target.src = `https://placehold.co/800x500/6366f1/white?text=${screenshot.title}`;
+                                            e.target.src = `https://placehold.co/800x500/${activeTheme.primary.replace('#', '')}/white?text=${screenshot.title}`;
                                         }}
                                     />
                                     {/* Overlay caption */}
@@ -199,7 +201,7 @@ export default function AppGallery() {
                                 alt={screenshot.title}
                                 className="w-16 h-12 object-cover"
                                 onError={(e) => {
-                                    e.target.src = `https://placehold.co/64x48/6366f1/white?text=${screenshot.title.substring(0, 3)}`;
+                                    e.target.src = `https://placehold.co/64x48/${activeTheme.primary.replace('#', '')}/white?text=${screenshot.title.substring(0, 3)}`;
                                 }}
                             />
                         </button>

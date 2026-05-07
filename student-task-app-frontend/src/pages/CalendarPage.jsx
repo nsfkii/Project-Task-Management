@@ -124,7 +124,6 @@ export default function CalendarPage() {
                 </div>
             `,
             icon: 'info',
-            confirmButtonColor: '#6366f1',
             confirmButtonText: 'Tutup',
             background: '#fff',
             backdrop: true,

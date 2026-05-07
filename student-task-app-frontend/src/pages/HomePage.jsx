@@ -9,7 +9,7 @@ import AppGallery from '../components/AppGallery';
 import { buildAvatarUrl, parseTasksPayload, toArray } from '../utils/apiResponse';
 
 export default function HomePage() {
-    const { user, theme, setTheme } = useContext(AuthContext);
+    const { user, theme, setTheme, activeTheme } = useContext(AuthContext);
     const navigate = useNavigate();
     const [stats, setStats] = useState({ total: 0, done: 0, progress: 0, pending: 0 });
     const [recentTasks, setRecentTasks] = useState([]);
@@ -110,7 +110,7 @@ export default function HomePage() {
                                             />
                                         ) : (
                                             <img 
-                                                src={`https://ui-avatars.com/api/?name=${user?.name || 'User'}&background=6366f1&color=fff&size=96`} 
+                                                src={`https://ui-avatars.com/api/?name=${user?.name || 'User'}&background=${activeTheme.primary.replace('#', '')}&color=fff&size=96`} 
                                                 alt="Profile" 
                                             />
                                         )}
@@ -128,7 +128,7 @@ export default function HomePage() {
                                         className="w-full flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/50 rounded-t-xl transition-colors"
                                     >
                                         <img 
-                                            src={user?.avatar ? buildAvatarUrl(user.avatar) : `https://ui-avatars.com/api/?name=${user?.name || 'User'}&background=6366f1&color=fff&size=96`} 
+                                            src={user?.avatar ? buildAvatarUrl(user.avatar) : `https://ui-avatars.com/api/?name=${user?.name || 'User'}&background=${activeTheme.primary.replace('#', '')}&color=fff&size=96`} 
                                             alt="Profile" 
                                             className="w-4 h-4 sm:w-5 sm:h-5 rounded-full"
                                         />

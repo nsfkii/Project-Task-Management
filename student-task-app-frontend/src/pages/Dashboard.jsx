@@ -328,7 +328,6 @@ export default function Dashboard() {
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#ef4444',
-            cancelButtonColor: '#6366f1',
             confirmButtonText: 'Ya, Hapus!',
             cancelButtonText: 'Batal',
             background: '#ffffff',

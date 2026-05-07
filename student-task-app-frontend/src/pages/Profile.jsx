@@ -11,7 +11,7 @@ import api from '../api/axios';
 import { buildAvatarUrl, parseTasksPayload, parseUserPayload, toArray } from '../utils/apiResponse';
 
 export default function Profile() {
-    const { user, userProfile, updateUserProfile, setUser, colorTheme, setColorTheme } = useContext(AuthContext);
+    const { user, userProfile, updateUserProfile, setUser, colorTheme, setColorTheme, activeTheme } = useContext(AuthContext);
     const [isEditing, setIsEditing] = useState(false);
     const [loading, setLoading] = useState(false);
     const [taskStats, setTaskStats] = useState({ total: 0, done: 0, progress: 0, pending: 0 });
@@ -139,7 +139,6 @@ export default function Profile() {
                     icon: 'error',
                     title: 'File Terlalu Besar',
                     text: 'Ukuran file maksimal 2MB',
-                    confirmButtonColor: '#4F46E5'
                 });
                 return;
             }
@@ -148,13 +147,19 @@ export default function Profile() {
                     icon: 'error',
                     title: 'Format Tidak Didukung',
                     text: 'Hanya file gambar yang diperbolehkan',
-                    confirmButtonColor: '#4F46E5'
                 });
                 return;
             }
             setAvatarFile(file);
             setPreviewUrl(URL.createObjectURL(file));
         }
+    };
+
+    const normalizeUrl = (url) => {
+        if (!url) return '';
+        const trimmed = url.trim();
+        if (/^https?:\/\//i.test(trimmed)) return trimmed;
+        return `https://${trimmed.replace(/^\/+/, '')}`;
     };
 
     const handleSave = async (e) => {
@@ -168,10 +173,10 @@ export default function Profile() {
         data.append('semester', formData.semester);
         data.append('ipk', formData.ipk);
         data.append('bio', formData.bio);
-        data.append('github', formData.github);
-        data.append('linkedin', formData.linkedin);
-        data.append('instagram', formData.instagram);
-        data.append('website', formData.website);
+        data.append('github', normalizeUrl(formData.github));
+        data.append('linkedin', normalizeUrl(formData.linkedin));
+        data.append('instagram', normalizeUrl(formData.instagram));
+        data.append('website', normalizeUrl(formData.website));
         if (avatarFile) data.append('avatar', avatarFile);
         
         try {
@@ -196,7 +201,6 @@ export default function Profile() {
                 icon: 'error',
                 title: 'Gagal!',
                 text: error.response?.data?.message || 'Gagal memperbarui profil.',
-                confirmButtonColor: '#4F46E5'
             });
         } finally {
             setLoading(false);
@@ -231,7 +235,6 @@ export default function Profile() {
                 icon: 'warning',
                 title: 'Form Tidak Lengkap',
                 text: 'Nama dan URL harus diisi!',
-                confirmButtonColor: '#4F46E5'
             });
             return;
         }
@@ -249,7 +252,6 @@ export default function Profile() {
                 icon: 'error',
                 title: 'URL Tidak Valid',
                 text: 'Masukkan URL yang valid (contoh: https://kampus.ac.id)',
-                confirmButtonColor: '#4F46E5'
             });
             return;
         }
@@ -273,7 +275,6 @@ export default function Profile() {
                 icon: 'error',
                 title: 'Gagal!',
                 text: error.response?.data?.message || 'Gagal menambahkan link',
-                confirmButtonColor: '#4F46E5'
             });
         } finally {
             setAddingLink(false);
@@ -298,7 +299,6 @@ export default function Profile() {
                 icon: 'error',
                 title: 'Gagal!',
                 text: 'Gagal memperbarui link',
-                confirmButtonColor: '#4F46E5'
             });
         }
     };
@@ -334,7 +334,6 @@ export default function Profile() {
                     icon: 'error',
                     title: 'Gagal!',
                     text: 'Gagal menghapus link',
-                    confirmButtonColor: '#4F46E5'
                 });
             }
         }
@@ -364,7 +363,7 @@ export default function Profile() {
                     <div className="flex items-center gap-4">
                         <div className="relative group">
                             <img
-                                src={previewUrl || `https://ui-avatars.com/api/?name=${formData.name || 'User'}&background=6366f1&color=fff&size=96`}
+                                src={previewUrl || `https://ui-avatars.com/api/?name=${formData.name || 'User'}&background=${activeTheme.primary.replace('#', '')}&color=fff&size=96`}
                                 alt="Avatar"
                                 className="h-20 w-20 rounded-full border-4 border-white dark:border-slate-800 shadow-md object-cover object-center group-hover:ring-2 group-hover:ring-indigo-400 transition-all"
                             />

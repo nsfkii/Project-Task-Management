@@ -9,7 +9,7 @@ import Swal from 'sweetalert2';
 import { buildAvatarUrl } from '../utils/apiResponse';
 
 export default function Topbar({ onToggleSidebar }) {
-    const { user, theme, setTheme, logout } = useContext(AuthContext);
+    const { user, theme, setTheme, logout, activeTheme } = useContext(AuthContext);
     const navigate = useNavigate();
     const location = useLocation();
     const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -46,7 +46,6 @@ export default function Topbar({ onToggleSidebar }) {
             icon: 'question',
             showCancelButton: true,
             confirmButtonColor: '#ef4444',
-            cancelButtonColor: '#6366f1',
             confirmButtonText: 'Ya, Logout',
             cancelButtonText: 'Batal',
             background: '#ffffff',
@@ -204,7 +203,7 @@ export default function Topbar({ onToggleSidebar }) {
                                     {user?.avatar ? (
                                         <img src={buildAvatarUrl(user.avatar)} alt="Profile" className="w-full h-full object-cover" />
                                     ) : (
-                                        <img src={`https://ui-avatars.com/api/?name=${user?.name || 'User'}&background=6366f1&color=fff&size=96`} alt="Profile" />
+                                        <img src={`https://ui-avatars.com/api/?name=${user?.name || 'User'}&background=${activeTheme.primary.replace('#', '')}&color=fff&size=96`} alt="Profile" />
                                     )}
                                 </div>
                                 <span className="text-sm font-medium text-slate-700 dark:text-slate-200 hidden lg:inline-block max-w-[100px] truncate">
@@ -219,7 +218,7 @@ export default function Topbar({ onToggleSidebar }) {
                                     className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/50 rounded-t-xl transition-colors"
                                 >
                                     <img 
-                                        src={user?.avatar ? buildAvatarUrl(user.avatar) : `https://ui-avatars.com/api/?name=${user?.name || 'User'}&background=6366f1&color=fff&size=96`} 
+                                        src={user?.avatar ? buildAvatarUrl(user.avatar) : `https://ui-avatars.com/api/?name=${user?.name || 'User'}&background=${activeTheme.primary.replace('#', '')}&color=fff&size=96`} 
                                         alt="Profile" 
                                         className="w-5 h-5 rounded-full"
                                     />
@@ -280,7 +279,7 @@ export default function Topbar({ onToggleSidebar }) {
                                 {user?.avatar ? (
                                     <img src={buildAvatarUrl(user.avatar)} alt="Profile" className="w-full h-full object-cover" />
                                 ) : (
-                                    <img src={`https://ui-avatars.com/api/?name=${user?.name || 'User'}&background=6366f1&color=fff&size=96`} alt="Profile" />
+                                    <img src={`https://ui-avatars.com/api/?name=${user?.name || 'User'}&background=${activeTheme.primary.replace('#', '')}&color=fff&size=96`} alt="Profile" />
                                 )}
                             </div>
                             <div>

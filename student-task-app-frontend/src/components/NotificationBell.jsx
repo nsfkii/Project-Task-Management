@@ -125,7 +125,6 @@ export default function NotificationBell() {
                 </div>
             `,
             icon: 'info',
-            confirmButtonColor: '#6366f1',
             confirmButtonText: 'Tutup',
             showCancelButton: true,
             cancelButtonText: 'Lihat di Dashboard',

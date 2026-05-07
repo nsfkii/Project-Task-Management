@@ -96,10 +96,10 @@ class AuthController extends Controller
         $user->semester = $request->semester ?? $user->semester ?? 1;
         $user->ipk = $request->ipk ?? $user->ipk ?? 0;
         $user->bio = $request->bio;
-        $user->github = $request->github;
-        $user->linkedin = $request->linkedin;
-        $user->instagram = $request->instagram;
-        $user->website = $request->website;
+        $user->github = $this->normalizeUrl($request->github);
+        $user->linkedin = $this->normalizeUrl($request->linkedin);
+        $user->instagram = $this->normalizeUrl($request->instagram);
+        $user->website = $this->normalizeUrl($request->website);
 
         // Upload avatar if exists
         if ($request->hasFile('avatar')) {
@@ -115,7 +115,9 @@ class AuthController extends Controller
         return response()->json([
             'message' => 'Profil berhasil diperbarui',
             'data' => [
-                'user' => $user,
+                'user' => array_merge($user->toArray(), [
+                    'avatar_url' => $user->avatar ? asset('storage/'.$user->avatar) : null,
+                ]),
             ],
         ]);
     }
@@ -123,8 +125,14 @@ class AuthController extends Controller
     // 4. GET USER (PROFILE)
     public function getUser(Request $request)
     {
+        $user = $request->user();
+
         return response()->json([
-            'data' => $request->user(),
+            'data' => [
+                'user' => array_merge($user->toArray(), [
+                    'avatar_url' => $user->avatar ? asset('storage/'.$user->avatar) : null,
+                ]),
+            ],
         ]);
     }
 
@@ -137,6 +145,20 @@ class AuthController extends Controller
         return response()->json([
             'message' => 'Logout berhasil'
         ]);
+    }
+
+    private function normalizeUrl(?string $url): ?string
+    {
+        if (!$url) {
+            return null;
+        }
+
+        $trimmed = trim($url);
+        if (preg_match('/^https?:\/\//i', $trimmed)) {
+            return $trimmed;
+        }
+
+        return 'https://' . ltrim($trimmed, '/');
     }
 
     public function forgotPassword(Request $request)
