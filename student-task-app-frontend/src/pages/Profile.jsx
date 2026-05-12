@@ -403,19 +403,6 @@ export default function Profile() {
                     )}
                 </div>
 
-                {/* Badges */}
-                <div className="flex flex-wrap items-center gap-2 px-6 pb-3">
-                    <span className="px-3 py-1 rounded-full bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-400 text-xs font-semibold flex items-center gap-1">
-                        <GraduationCap size={12} /> Mahasiswa Aktif
-                    </span>
-                    <span className="px-3 py-1 rounded-full bg-indigo-100 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-400 text-xs font-semibold flex items-center gap-1">
-                        <Award size={12} /> Semester {formData.semester}
-                    </span>
-                    <span className="px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 text-xs font-semibold flex items-center gap-1">
-                        <BookOpen size={12} /> {formData.ipk ? `IPK ${formData.ipk}` : 'Belum ada IPK'}
-                    </span>
-                </div>
-
                 {/* Form / Informasi */}
                 <form onSubmit={handleSave} className="px-6 pb-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -467,10 +454,10 @@ export default function Profile() {
                             )}
                         </div>
 
-                        {/* Semester */}
+                        {/* Kelas / Semester */}
                         <div>
                             <label className="flex items-center gap-2 text-sm font-semibold text-slate-500 dark:text-slate-400 mb-1">
-                                <Calendar size={16} /> Semester
+                                <Calendar size={16} /> Kelas / Semester
                             </label>
                             {isEditing ? (
                                 <select value={formData.semester} onChange={(e) => setFormData({...formData, semester: parseInt(e.target.value)})} className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none text-slate-800 dark:text-white transition-all">
@@ -481,10 +468,10 @@ export default function Profile() {
                             )}
                         </div>
 
-                        {/* IPK */}
+                        {/* Nilai / IPK */}
                         <div>
                             <label className="flex items-center gap-2 text-sm font-semibold text-slate-500 dark:text-slate-400 mb-1">
-                                <Award size={16} /> IPK / Nilai Rata-rata
+                                <Award size={16} /> Nilai / IPK
                             </label>
                             {isEditing ? (
                                 <input type="number" step="0.01" min="0" max="4" value={formData.ipk} onChange={(e) => setFormData({...formData, ipk: parseFloat(e.target.value) || 0})} className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none text-slate-800 dark:text-white transition-all" placeholder="0.00" />

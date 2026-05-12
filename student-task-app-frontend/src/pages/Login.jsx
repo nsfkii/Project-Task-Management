@@ -98,13 +98,18 @@ export default function Login() {
                                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                             </button>
                         </div>
+                        <div className="mt-2 text-right">
+                            <Link to="/forgot-password" className="text-sm text-indigo-600 hover:underline font-medium">
+                                Lupa Password?
+                            </Link>
+                        </div>
                     </div>
 
                     {/* Submit Button */}
                     <button 
                         type="submit" 
                         disabled={loading}
-                        className="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold shadow-md hover:shadow-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                        className="w-full mt-2 py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold shadow-md hover:shadow-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                     >
                         {loading ? (
                             <>
@@ -124,9 +129,6 @@ export default function Login() {
 
                 <p className="mt-4 text-center text-sm text-slate-600 dark:text-slate-400">
                     Belum punya akun? <Link to="/register" className="text-indigo-600 hover:underline font-medium">Daftar di sini</Link>
-                </p>
-                <p className="mt-2 text-center text-sm text-slate-600 dark:text-slate-400">
-                    <Link to="/forgot-password" className="text-indigo-600 hover:underline font-medium">Lupa Password?</Link>
                 </p>
             </div>
         </div>

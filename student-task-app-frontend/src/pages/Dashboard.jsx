@@ -21,7 +21,7 @@ export default function Dashboard() {
     const [filterStatus, setFilterStatus] = useState('');
     const [filterPriority, setFilterPriority] = useState('');
 
-    // State untuk mata kuliah
+    // State untuk pelajaran / mata kuliah
     const [subjects, setSubjects] = useState([]);
 
     // State untuk near deadline tasks
@@ -39,10 +39,9 @@ export default function Dashboard() {
         deadline: '', priority: 'medium', status: 'pending'
     });
 
-    // Modal state untuk tambah mata kuliah
+    // Modal state untuk tambah pelajaran / mata kuliah
     const [isAddSubjectModalOpen, setIsAddSubjectModalOpen] = useState(false);
     const [newSubjectName, setNewSubjectName] = useState('');
-    const [newSubjectColor, setNewSubjectColor] = useState('');
     const [isAddingSubject, setIsAddingSubject] = useState(false);
 
     useEffect(() => {
@@ -53,13 +52,13 @@ export default function Dashboard() {
     // Ambil nama user dari AuthContext
     const { user } = useContext(AuthContext); 
 
-    // Ambil daftar mata kuliah
+    // Ambil daftar pelajaran / mata kuliah
     const fetchSubjects = useCallback(async () => {
         try {
             const response = await api.get('/subjects');
             setSubjects(response.data.data || response.data);
         } catch (error) {
-            console.error("Gagal mengambil data mata kuliah", error);
+            console.error("Gagal mengambil data pelajaran/mata kuliah", error);
         }
     }, []);
 
@@ -384,10 +383,9 @@ export default function Dashboard() {
         }
     };
 
-    // Handler untuk tambah mata kuliah
+    // Handler untuk tambah pelajaran / mata kuliah
     const openAddSubjectModal = () => {
         setNewSubjectName('');
-        setNewSubjectColor('');
         setIsAddSubjectModalOpen(true);
     };
 
@@ -402,7 +400,7 @@ export default function Dashboard() {
             Swal.fire({
                 icon: 'warning',
                 title: 'Oops...',
-                text: 'Nama mata kuliah tidak boleh kosong',
+                text: 'Nama pelajaran/mata kuliah tidak boleh kosong',
                 toast: true,
                 position: 'top-end',
                 showConfirmButton: false,
@@ -414,7 +412,7 @@ export default function Dashboard() {
         
         Swal.fire({
             title: 'Menyimpan...',
-            text: 'Sedang menambah mata kuliah',
+            text: 'Sedang menambah pelajaran/mata kuliah',
             allowOutsideClick: false,
             didOpen: () => {
                 Swal.showLoading();
@@ -428,7 +426,6 @@ export default function Dashboard() {
         try {
             const response = await api.post('/subjects', {
                 name: newSubjectName.trim(),
-                color: newSubjectColor || null,
             });
             const newSubject = response.data.data;
             await fetchSubjects();
@@ -446,12 +443,12 @@ export default function Dashboard() {
                 timer: 2000,
             });
         } catch (error) {
-            console.error("Gagal menambah mata kuliah", error);
+            console.error("Gagal menambah pelajaran/mata kuliah", error);
             Swal.close();
             Swal.fire({
                 icon: 'error',
                 title: 'Gagal!',
-                text: error.response?.data?.message || 'Terjadi kesalahan saat menambah mata kuliah',
+                text: error.response?.data?.message || 'Terjadi kesalahan saat menambah pelajaran/mata kuliah',
                 toast: true,
                 position: 'top-end',
                 showConfirmButton: false,
@@ -460,6 +457,37 @@ export default function Dashboard() {
         } finally {
             setIsAddingSubject(false);
         }
+    };
+
+    const displayedTasks = tasks.filter((task) => {
+        const subjectName = task.subject?.name || task.subject || '';
+        const searchableText = [
+            task.title,
+            task.description,
+            subjectName,
+            task.source_url,
+        ].join(' ').toLowerCase();
+        const keyword = debouncedSearch.trim().toLowerCase();
+
+        const matchesSearch = !keyword || searchableText.includes(keyword);
+        const matchesStatus = !filterStatus || task.status === filterStatus;
+        const matchesPriority = !filterPriority || task.priority === filterPriority;
+
+        return matchesSearch && matchesStatus && matchesPriority;
+    });
+
+    const handleStatusFilter = (status) => {
+        setFilterStatus(status);
+        setPage(1);
+    };
+
+    const getStatCardClass = (status) => {
+        const isActive = filterStatus === status;
+        return `p-5 rounded-2xl bg-white dark:bg-slate-800 shadow-sm border transition-all duration-300 cursor-pointer ${
+            isActive
+                ? 'border-indigo-300 dark:border-indigo-500 ring-2 ring-indigo-100 dark:ring-indigo-500/20 -translate-y-1'
+                : 'border-slate-100 dark:border-slate-700 hover:-translate-y-1'
+        }`;
     };
 
     return (
@@ -547,8 +575,8 @@ export default function Dashboard() {
             <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
                 {/* Total Tugas */}
                 <div 
-                    onClick={() => { setFilterStatus(''); setPage(1); }}
-                    className="p-5 rounded-2xl bg-white dark:bg-slate-800 shadow-sm border border-slate-100 dark:border-slate-700 group hover:-translate-y-1 transition-transform duration-300 cursor-pointer"
+                    onClick={() => handleStatusFilter('')}
+                    className={getStatCardClass('')}
                 >
                     <div className="flex items-center gap-3">
                         <div className="h-12 w-12 rounded-xl bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-blue-500">
@@ -563,8 +591,8 @@ export default function Dashboard() {
 
                 {/* Selesai */}
                 <div 
-                    onClick={() => { setFilterStatus('done'); setPage(1); }}
-                    className="p-5 rounded-2xl bg-white dark:bg-slate-800 shadow-sm border border-slate-100 dark:border-slate-700 group hover:-translate-y-1 transition-transform duration-300 cursor-pointer"
+                    onClick={() => handleStatusFilter('done')}
+                    className={getStatCardClass('done')}
                 >
                     <div className="flex items-center gap-3">
                         <div className="h-12 w-12 rounded-xl bg-green-50 dark:bg-green-500/10 flex items-center justify-center text-green-500">
@@ -579,8 +607,8 @@ export default function Dashboard() {
 
                 {/* Sedang Dikerjakan */}
                 <div 
-                    onClick={() => { setFilterStatus('progress'); setPage(1); }}
-                    className="p-5 rounded-2xl bg-white dark:bg-slate-800 shadow-sm border border-slate-100 dark:border-slate-700 group hover:-translate-y-1 transition-transform duration-300 cursor-pointer"
+                    onClick={() => handleStatusFilter('progress')}
+                    className={getStatCardClass('progress')}
                 >
                     <div className="flex items-center gap-3">
                         <div className="h-12 w-12 rounded-xl bg-amber-50 dark:bg-amber-500/10 flex items-center justify-center text-amber-500">
@@ -595,8 +623,8 @@ export default function Dashboard() {
 
                 {/* Belum Dimulai */}
                 <div 
-                    onClick={() => { setFilterStatus('pending'); setPage(1); }}
-                    className="p-5 rounded-2xl bg-white dark:bg-slate-800 shadow-sm border border-slate-100 dark:border-slate-700 group hover:-translate-y-1 transition-transform duration-300 cursor-pointer"
+                    onClick={() => handleStatusFilter('pending')}
+                    className={getStatCardClass('pending')}
                 >
                     <div className="flex items-center gap-3">
                         <div className="h-12 w-12 rounded-xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400">
@@ -639,7 +667,7 @@ export default function Dashboard() {
                 <div className="grid grid-cols-1 xs:grid-cols-2 md:flex gap-2 w-full md:w-auto">
                     <select 
                         value={filterStatus} 
-                        onChange={(e) => setFilterStatus(e.target.value)} 
+                        onChange={(e) => handleStatusFilter(e.target.value)} 
                         className="w-full min-w-0 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white text-sm"
                     >
                         <option value="">Semua Status</option>
@@ -673,13 +701,13 @@ export default function Dashboard() {
                         <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
                         <p className="mt-3 text-slate-500 dark:text-slate-400">Memuat data...</p>
                     </div>
-                ) : tasks.length === 0 ? (
+                ) : displayedTasks.length === 0 ? (
                     <div className="col-span-full text-center py-12 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700">
                         <Clock className="mx-auto text-slate-300 dark:text-slate-600" size={48} />
                         <p className="mt-3 text-slate-500 dark:text-slate-400">Tidak ada tugas ditemukan</p>
                     </div>
                 ) : (
-                    tasks.map((task) => {
+                    displayedTasks.map((task) => {
                         let cardBg = 'bg-white dark:bg-slate-800';
                         let cardBorder = 'border-slate-100 dark:border-slate-700';
                         let priorityBadge = getPriorityColor(task.priority);
@@ -836,7 +864,7 @@ export default function Dashboard() {
                                 <input type="text" required value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} className="w-full px-4 py-2 rounded-lg bg-slate-50 dark:bg-slate-900 border focus:ring-2 focus:ring-indigo-500 outline-none text-sm" placeholder="Contoh: Perancangan Strategis SI" />
                             </div>
                             <div>
-                                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Mata Kuliah *</label>
+                                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Pelajaran/Mata Kuliah *</label>
                                 <div className="flex gap-2">
                                     <select
                                         required
@@ -844,7 +872,7 @@ export default function Dashboard() {
                                         onChange={(e) => setFormData({...formData, subject_id: e.target.value})}
                                         className="flex-1 px-4 py-2 rounded-lg bg-slate-50 dark:bg-slate-900 border focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
                                     >
-                                        <option value="">Pilih Mata Kuliah</option>
+                                        <option value="">Pilih Pelajaran/Mata Kuliah</option>
                                         {subjects.map((subject) => (
                                             <option key={subject.id} value={subject.id}>
                                                 {subject.name}
@@ -855,7 +883,7 @@ export default function Dashboard() {
                                         type="button"
                                         onClick={openAddSubjectModal}
                                         className="p-2 text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors"
-                                        title="Tambah Mata Kuliah Baru"
+                                        title="Tambah Pelajaran/Mata Kuliah Baru"
                                     >
                                         <Plus size={20} />
                                     </button>
@@ -920,13 +948,13 @@ export default function Dashboard() {
                 </div>
             )}
 
-            {/* MODAL TAMBAH MATA KULIAH - tetap sama */}
+            {/* MODAL TAMBAH PELAJARAN / MATA KULIAH */}
             {isAddSubjectModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
                     <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl w-full max-w-md">
                         <div className="flex justify-between items-center p-5 border-b dark:border-slate-700">
                             <h3 className="text-lg font-bold text-slate-800 dark:text-white">
-                                Tambah Mata Kuliah Baru
+                                Tambah Pelajaran/Mata Kuliah Baru
                             </h3>
                             <button onClick={closeAddSubjectModal} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
                                 <X size={20} />
@@ -934,7 +962,7 @@ export default function Dashboard() {
                         </div>
                         <form onSubmit={handleAddSubject} className="p-5 space-y-4">
                             <div>
-                                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Nama Mata Kuliah *</label>
+                                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Nama Pelajaran/Mata Kuliah *</label>
                                 <input 
                                     type="text" 
                                     required
@@ -943,15 +971,6 @@ export default function Dashboard() {
                                     className="w-full px-4 py-2 rounded-lg bg-slate-50 dark:bg-slate-900 border focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
                                     placeholder="Contoh: Pemrograman Web"
                                     autoFocus
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Warna (Opsional)</label>
-                                <input 
-                                    type="color" 
-                                    value={newSubjectColor}
-                                    onChange={(e) => setNewSubjectColor(e.target.value)}
-                                    className="w-full h-10 rounded-lg bg-slate-50 dark:bg-slate-900 border focus:ring-2 focus:ring-indigo-500 outline-none cursor-pointer"
                                 />
                             </div>
                             <div className="flex justify-end gap-3 pt-4 border-t dark:border-slate-700">
@@ -963,7 +982,7 @@ export default function Dashboard() {
                                     disabled={isAddingSubject}
                                     className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-sm"
                                 >
-                                    {isAddingSubject ? 'Menyimpan...' : 'Simpan Mata Kuliah'}
+                                    {isAddingSubject ? 'Menyimpan...' : 'Simpan Pelajaran/Mata Kuliah'}
                                 </button>
                             </div>
                         </form>
